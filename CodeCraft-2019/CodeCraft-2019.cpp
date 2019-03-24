@@ -1,6 +1,6 @@
 #include "iostream"
 #include "utils.h"
-
+#include "dijsktra.h"
 
 #include<ctime>
 
@@ -29,10 +29,14 @@ int main(int argc, char *argv[])
 	std::cout << "answerPath is " << answerPath << std::endl;
 	
 	// 第一步：读入文件
-	map<int, map<string, int>> car_dict = read_car(carPath);
-	map<int, map<string, int>> road_dict = read_road(roadPath);
-	map<int, map<string, int>> cross_dict = read_cross(crossPath);
+	auto car_dict = read_car(carPath);
+    auto road_dict = read_road(roadPath);
+    auto cross_dict = read_cross(crossPath);
 
+    // 第二步：处理数据
+    // 1. 生成拓扑字典
+    auto topologyDict = create_topology(road_dict);
+//	Graph graph;
 
 
 	// TODO:process

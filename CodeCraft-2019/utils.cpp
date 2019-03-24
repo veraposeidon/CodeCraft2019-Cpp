@@ -41,9 +41,9 @@ vector<string> split(const string &str, const string &ch = " ") {
 /// 道路信息读取
 /// \param road_path
 /// \return
-map<int, map<string, int>> read_road(string road_path) {
+unordered_map<int, unordered_map<string, int>> read_road(string road_path) {
     // 初始化map
-    map<int, map<string, int>> road_dict;
+    unordered_map<int, unordered_map<string, int>> road_dict;
 
     // 打开文件
     ifstream road_file(road_path);
@@ -59,16 +59,16 @@ map<int, map<string, int>> read_road(string road_path) {
             data = strip(string(data), ')');
 
             vector<string> datalist = split(data, ", ");
-            map<string, int> road;
-            road.insert(pair<string, int>("id", stoi(datalist[0])));
-            road.insert(pair<string, int>("length", stoi(datalist[1])));
-            road.insert(pair<string, int>("speed", stoi(datalist[2])));
-            road.insert(pair<string, int>("channel", stoi(datalist[3])));
-            road.insert(pair<string, int>("from", stoi(datalist[4])));
-            road.insert(pair<string, int>("to", stoi(datalist[5])));
-            road.insert(pair<string, int>("isDuplex", stoi(datalist[6])));
+            unordered_map<string, int> road;
+            road["id"] = stoi(datalist[0]);
+            road["length"] = stoi(datalist[1]);
+            road["speed"] = stoi(datalist[2]);
+            road["channel"] = stoi(datalist[3]);
+            road["from"] = stoi(datalist[4]);
+            road["to"] = stoi(datalist[5]);
+            road["isDuplex"] = stoi(datalist[6]);
 
-            road_dict.insert(pair<int, map<string, int>>(road["id"], road));
+            road_dict[road["id"]] = road;
 
         }
         road_file.close();
@@ -81,9 +81,9 @@ map<int, map<string, int>> read_road(string road_path) {
 /// 路口信息读取
 /// \param cross_path
 /// \return
-map<int, map<string, int>> read_cross(string cross_path) {
+unordered_map<int, unordered_map<string, int>> read_cross(string cross_path) {
     // 初始化map
-    map<int, map<string, int>> cross_dict;
+    unordered_map<int, unordered_map<string, int>> cross_dict;
 
     // 打开文件
     ifstream cross_file(cross_path);
@@ -99,14 +99,14 @@ map<int, map<string, int>> read_cross(string cross_path) {
             data = strip(string(data), ')');
 
             vector<string> datalist = split(data, ", ");
-            map<string, int> cross;
-            cross.insert(pair<string, int>("id", stoi(datalist[0])));
-            cross.insert(pair<string, int>("road1", stoi(datalist[1])));
-            cross.insert(pair<string, int>("road2", stoi(datalist[2])));
-            cross.insert(pair<string, int>("road3", stoi(datalist[3])));
-            cross.insert(pair<string, int>("road4", stoi(datalist[4])));
+            unordered_map<string, int> cross;
+            cross["id"] = stoi(datalist[0]);
+            cross["road1"] = stoi(datalist[1]);
+            cross["road1"] = stoi(datalist[2]);
+            cross["road3"] = stoi(datalist[3]);
+            cross["road4"] = stoi(datalist[4]);
 
-            cross_dict.insert(pair<int, map<string, int>>(cross["id"], cross));
+            cross_dict[cross["id"]] = cross;
 
         }
         cross_file.close();
@@ -120,9 +120,9 @@ map<int, map<string, int>> read_cross(string cross_path) {
 /// 车辆信息读取
 /// \param cross_path
 /// \return
-map<int, map<string, int>> read_car(string car_path) {
+unordered_map<int, unordered_map<string, int>> read_car(string car_path) {
     // 初始化map
-    map<int, map<string, int>> car_dict;
+    unordered_map<int, unordered_map<string, int>> car_dict;
 
     // 打开文件
     ifstream car_file(car_path);
@@ -138,14 +138,15 @@ map<int, map<string, int>> read_car(string car_path) {
             data = strip(string(data), ')');
 
             vector<string> datalist = split(data, ", ");
-            map<string, int> car;
-            car.insert(pair<string, int>("id", stoi(datalist[0])));
-            car.insert(pair<string, int>("from", stoi(datalist[1])));
-            car.insert(pair<string, int>("to", stoi(datalist[2])));
-            car.insert(pair<string, int>("speed", stoi(datalist[3])));
-            car.insert(pair<string, int>("planTime", stoi(datalist[4])));
 
-            car_dict.insert(pair<int, map<string, int>>(car["id"], car));
+            unordered_map<string, int> car;
+            car["id"] = stoi(datalist[0]);
+            car["from"] = stoi(datalist[1]);
+            car["to"] = stoi(datalist[2]);
+            car["speed"] = stoi(datalist[3]);
+            car["planTime"] = stoi(datalist[4]);
+
+            car_dict[car["id"]] = car;
 
         }
         car_file.close();

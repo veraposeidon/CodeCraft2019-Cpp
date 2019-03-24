@@ -9,12 +9,12 @@
 #include <fstream>
 #include <string>
 
-#include <map>
+#include <unordered_map>
 using namespace std;
 
-map<int,map<string, int>> read_road(string road_path);
-map<int,map<string, int>> read_cross(string road_path);
-map<int,map<string, int>> read_car(string road_path);
+unordered_map<int,unordered_map<string, int>> read_road(string road_path);
+unordered_map<int,unordered_map<string, int>> read_cross(string road_path);
+unordered_map<int,unordered_map<string, int>> read_car(string road_path);
 
 
 #endif //CODECRAFT_2019_UTILS_H
