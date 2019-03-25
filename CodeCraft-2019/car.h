@@ -8,9 +8,6 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
-
-
-
 using  namespace std;
 
 //  {'roadID': None, 'channel': None, 'pos': None, 'now': None, 'next': None}
@@ -28,21 +25,20 @@ enum CarStatus {
 
 class Car {
 public:
-    int carID;
-    int carFrom;
-    int carTo;
-    int carSpeed;
-    int carPlanTime;
-    CarStatus carStatus;
-    int startTime;
-    topology_type map;
+    int carID;              // 车辆编号
+    int carFrom;            // 车辆起点
+    int carTo;              // 车辆终点
+    int carSpeed;           // 车辆速度
+    int carPlanTime;        // 预计发车时间
+    CarStatus carStatus;    // 车辆状态
+    int startTime;          // 实际发车车间
     GPS_type carGPS;        // 定位
     vector<int> strategy;   // 规划路径
     vector<int> passed_by;  // 记录路过的路段，该结果为最终结果
 
     // 构造函数
-    Car(int car_id, int origin, int destination, int speed, int plan_time,
-        topology_type &topology);
+    Car();
+    Car(int car_id, int origin, int destination, int speed, int plan_time);
 
     // 判断是否结束
     bool is_ended();
@@ -51,7 +47,7 @@ public:
     void mark_new_pos(int road_id, int channel, int pos, int this_cross, int next_cross);
 
     // 尝试启动，找最佳路径并返回下一路段名称
-    string try_start(Graph graph, int time);
+    string try_start(Graph &graph, int time);
 
     // 更改状态为等待处理
     void change2waiting();
@@ -91,7 +87,6 @@ public:
 
     // 更新策略的时候一定要注意不走回头路
     void update_new_strategy(Graph graph);
-
 
 };
 

@@ -8,9 +8,28 @@
 
 #define NO_ANSWER "NONE"
 
+Car::Car() {
+    carID = -1;
+    carFrom = -1;
+    carTo = -1;
+    carSpeed = -1;
+    carPlanTime = -1;
+    carStatus = WAITING_HOME;
+    startTime = -1;
 
-Car::Car(const int car_id, const int origin, const int destination, const int speed, const int plan_time,
-         topology_type &topology) {
+    // 初始化GPS
+    carGPS["roadID"] = 0;
+    carGPS["channel"] = 0;
+    carGPS["pos"] = 0;
+    carGPS["now"] = 0;
+    carGPS["next"] = 0;
+    // 策略
+    strategy = vector<int>(0);
+    // 路线
+    passed_by = vector<int>(0);
+}
+
+Car::Car(int car_id, int origin, int destination, int speed, int plan_time) {
     carID = car_id;
     carFrom = origin;
     carTo = destination;
@@ -18,7 +37,6 @@ Car::Car(const int car_id, const int origin, const int destination, const int sp
     carPlanTime = plan_time;
     carStatus = WAITING_HOME;
     startTime = 0;
-    map = topology;
 
     // 初始化GPS
     carGPS["roadID"] = 0;
@@ -63,7 +81,7 @@ void Car::mark_new_pos(int road_id, int channel, int pos, int this_cross, int ne
 /// \param time
 /// \param suceed
 /// \return
-string Car::try_start(Graph graph, int time) {
+string Car::try_start(Graph &graph, int time) {
 
     // 如果已经在路上就不需要再启动了 或者没到时间
     if (carStatus != WAITING_HOME || time < carPlanTime) {
@@ -215,6 +233,7 @@ void Car::update_new_strategy(Graph graph) {
         graph.update_weight(next_cross, this_cross, origin_weight);
     }
 }
+
 
 
 

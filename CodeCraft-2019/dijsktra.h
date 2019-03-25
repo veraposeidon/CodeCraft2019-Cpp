@@ -25,7 +25,7 @@ struct key_hash : public std::unary_function<key_weight, std::size_t>
 {
     std::size_t operator()(const key_weight& k) const
     {
-        return std::get<0>(k) * 1000 +  std::get<1>(k);     // TODO: 注意啊，保持独立，编号为ID1-ID2。
+        return static_cast<size_t>(std::get<0>(k) * 1000 + std::get<1>(k));     // TODO: 注意啊，保持独立，编号为ID1-ID2。
     }
 };
 

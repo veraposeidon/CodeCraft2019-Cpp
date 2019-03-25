@@ -13,7 +13,7 @@ using namespace std;
 #define WEIGHT_MAX 10000
 #define SEARCH_END (-122)
 
-topology_type create_topology(const unordered_map<int, unordered_map<string, int>> &road_dict) {
+topology_type create_topology(const unordered_map<int, unordered_map<string, int> > &road_dict) {
     topology_type topology;
 
 //    for (auto iter = road_dict.begin(); iter!=road_dict.end(); ++iter)
@@ -59,7 +59,7 @@ topology_type create_topology(const unordered_map<int, unordered_map<string, int
 
 
 Graph::Graph() {
-    edges = unordered_map<int, vector<int>>();
+    edges = unordered_map<int, vector<int> >();
     weights = map_weight();
 
 //    heapq = unordered_map<int, tuple<double,int>>();
@@ -93,7 +93,7 @@ void Graph::update_weight(const int from_node, const int to_node, const double w
 vector<int> Graph::short_path_finding(const int from_node, const int to_node) {
 
     // shortest_paths是字典，索引为节点，值为tuple(上一个节点，权重)
-    unordered_map<int, pair<int, double>> shortest_paths = {{from_node, make_pair(SEARCH_END, 0.0)}};
+    unordered_map<int, pair<int, double> > shortest_paths = {{from_node, make_pair(SEARCH_END, 0.0)}};
     int current_node = from_node;
     set<int> visited;
     while (current_node != to_node) {
@@ -102,37 +102,33 @@ vector<int> Graph::short_path_finding(const int from_node, const int to_node) {
         double weight_to_current_node = shortest_paths[current_node].second;
 
 //        std::cout << weight_to_current_node;
-        for (vector<int>::const_iterator next_node=destinations.begin(); next_node!=destinations.end();next_node++)
-        {
-            double weight = weights[std::make_tuple(current_node,*next_node)] + weight_to_current_node;
+        for (vector<int>::const_iterator next_node = destinations.begin();
+             next_node != destinations.end(); next_node++) {
+            double weight = weights[std::make_tuple(current_node, *next_node)] + weight_to_current_node;
 
             auto got = shortest_paths.find(*next_node);
             if (got == shortest_paths.end())    //不存在
             {
                 shortest_paths[*next_node] = make_pair(current_node, weight);
-            }
-            else{
+            } else {
                 double current_shortest_weight = shortest_paths[*next_node].second;
-                if (current_shortest_weight > weight)
-                {
+                if (current_shortest_weight > weight) {
                     shortest_paths[*next_node] = make_pair(current_node, weight);
                 }
             }
         }
 
-        unordered_map<int, pair<int, double>> next_destinations;
-        for( unordered_map<int, pair<int, double>>::const_iterator node = shortest_paths.begin(); node!=shortest_paths.end();node++)
-        {
+        unordered_map<int, pair<int, double> > next_destinations;
+        for (unordered_map<int, pair<int, double> >::const_iterator node = shortest_paths.begin();
+             node != shortest_paths.end(); node++) {
             int node_N = (*node).first;
             auto got = visited.find(node_N);
-            if(got == visited.end())
-            {
+            if (got == visited.end()) {
                 next_destinations[node_N] = shortest_paths[node_N];
             }
         }
 
-        if(next_destinations.empty())
-        {
+        if (next_destinations.empty()) {
             std::cout << "Route Not Possible" << endl;
             assert(!next_destinations.empty());
         }
@@ -140,25 +136,23 @@ vector<int> Graph::short_path_finding(const int from_node, const int to_node) {
 
         // 遍历找最小可能会稍快。
         current_node = (*next_destinations.begin()).first;
-        for( unordered_map<int, pair<int, double>>::const_iterator node = next_destinations.begin(); node!=next_destinations.end();node++)
-        {
+        for (unordered_map<int, pair<int, double> >::const_iterator node = next_destinations.begin();
+             node != next_destinations.end(); node++) {
             int node_N = (*node).first;
-            if(next_destinations[node_N].second < next_destinations[current_node].second)
-            {
+            if (next_destinations[node_N].second < next_destinations[current_node].second) {
                 current_node = node_N;
             }
         }
     }
 
     vector<int> path(0);
-    while(current_node != SEARCH_END)
-    {
+    while (current_node != SEARCH_END) {
         path.push_back(current_node);
         int next_node = shortest_paths[current_node].first;
         current_node = next_node;
     }
 
-    reverse(path.begin(),path.end());
+    reverse(path.begin(), path.end());
 
     return path;
 }
