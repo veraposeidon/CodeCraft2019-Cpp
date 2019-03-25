@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 using  namespace std;
-
+#define NO_ANSWER "NONE"
 //  {'roadID': None, 'channel': None, 'pos': None, 'now': None, 'next': None}
 typedef unordered_map<string, int> GPS_type;
 

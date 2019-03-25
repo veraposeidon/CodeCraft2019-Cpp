@@ -6,7 +6,7 @@
 #include "dijsktra.h"
 #include "car.h"
 
-#define NO_ANSWER "NONE"
+
 
 Car::Car() {
     carID = -1;
