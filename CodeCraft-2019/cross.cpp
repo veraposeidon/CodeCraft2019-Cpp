@@ -177,9 +177,8 @@ bool Cross::get_road_first_order_info(string road_name, unordered_map<string, Ro
 
                 // 获取方向,填入信息
                 string direction = get_direction(road_now_id, road_next_id);
-                order_info first_order_info(car_obj.carID, road_name, road_next_id, next_road_name, direction);
+                first_order =  order_info(car_obj.carID, road_name, road_next_id, next_road_name, direction);
                 road_id = road_now_id;
-                first_order = first_order_info;
                 return true;
             }
         }
@@ -220,7 +219,7 @@ Cross::get_first_order_info(unordered_map<string, Road> &road_dict, unordered_ma
  */
 void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unordered_map<int, Car> &car_dict) {
     // 1. 找到待进入车道和位置
-    int next_channel, e_pos;
+    int next_channel=-1, e_pos=-1;
     bool succeed = next_road.get_checkin_place_cross(next_channel, e_pos, car_dict);
     // 前方道路堵住
     // 前方道路堵住需要探讨（前方道路的车是终结态还是等待态，只要最后有车等待，那就可以等待，如果最后一排的车全为终结，那就终结）
@@ -254,7 +253,6 @@ void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unor
     // 前方道路没堵住
     int car_pos = car_obj.carGPS.pos;
     int car_channel = car_obj.carGPS.channel;
-    cout << (this_road.roadID) << endl;
     assert(this_road.roadStatus[car_channel][car_pos] == car_obj.carID);    // 聊胜于无的断言
 
     int remain_dis = (this_road.roadLength - 1) - car_pos;  // 上端剩余距离
@@ -283,7 +281,7 @@ void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unor
     else {
         int new_pos = real_dis - 1; // 注意下标
         // 判断前方有无车辆
-        int front_pos, front_id;
+        int front_pos=-1, front_id=-1;
         bool has_c = next_road.has_car(next_channel, 0, new_pos + 1, front_pos, front_id);
         // 前方有车
         if (has_c) {

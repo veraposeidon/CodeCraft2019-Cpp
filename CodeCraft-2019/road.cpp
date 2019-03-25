@@ -347,7 +347,6 @@ double Road::get_road_weight(double dist_k = 1.0) {
     dist_percent = 2.0 * (count_car * roadLength - count_dist) / (
                 (roadLength + 1) * roadLength * roadChannel);
 
-
     return cars_percent + dist_percent * dist_k;
 }
 

@@ -9,13 +9,13 @@
 
 // 场上车辆数目
 //CARS_ON_ROAD = 2500  // 大地图2500辆
-#define CARS_ON_ROAD  (1700)
+#define CARS_ON_ROAD  (1000)
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
 
 // 路口全部调度多少次重新更新车辆路线
-#define LOOPS_TO_UPDATE (4)
+#define LOOPS_TO_UPDATE (3)
 
 // 路口调度多少次直接判为死锁
 #define LOOPS_TO_DEAD_CLOCK (100)

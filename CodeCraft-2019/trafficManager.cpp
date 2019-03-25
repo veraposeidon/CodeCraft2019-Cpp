@@ -79,24 +79,17 @@ int trafficManager::update_cars(vector<int> &carAtHomeList, vector<int> &carOnRo
 
         if (car_obj.is_car_waiting_home()) {
             carAtHomeList.push_back(car_id);
+            ++iter;
         } else if (car_obj.is_car_on_road()) {
             carOnRoadList.push_back(car_id);
+            ++iter;
         } else if (car_obj.is_ended()) {
             carSucceedNum += 1;
             iter = launch_order.erase(iter);    // 发车列表中去除这个ID
         }
-
-        if (launch_order.empty())
-        {
-            break;
-        }
-
-        ++iter;
     }
-
     return carSucceedNum;
 }
-
 /**
  * 是否所有车辆演算结束
  * @return
