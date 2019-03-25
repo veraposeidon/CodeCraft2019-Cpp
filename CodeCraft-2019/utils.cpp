@@ -12,28 +12,28 @@
 
 string strip(const string &str, char ch = ' ') {
     //除去str两端的ch字符
-    int i = 0;
+    size_t i = 0;
     while (str[i] == ch)// 头部ch字符个数是 i
         i++;
-    auto j = static_cast<int>(str.size() - 1);
+    size_t j = str.size() - 1;
+
     while (str[j] == ch) //
         j--;
-    return str.substr(static_cast<unsigned long long int>(i), static_cast<unsigned long long int>(j + 1 - i));
+    return str.substr(i, j + 1 - i);
 }
 
 
 vector<string> split(const string &str, const string &ch = " ") {
     vector<string> ret;
-    int pos = 0;
-    int start = 0;
-    while ((pos = static_cast<int>(str.find(ch, static_cast<unsigned long long int>(start)))) != string::npos) {
+    size_t pos = 0;
+    size_t start = 0;
+    while ((pos = (str.find(ch, start))) != string::npos) {
         if (pos > start)
-            ret.push_back(str.substr(static_cast<unsigned long long int>(start),
-                                     static_cast<unsigned long long int>(pos - start)));
-        start = static_cast<int>(pos + ch.size());
+            ret.push_back(str.substr(start, pos - start));
+        start = pos + ch.size();
     }
     if (str.size() > start)
-        ret.push_back(str.substr(static_cast<unsigned long long int>(start)));
+        ret.push_back(str.substr(start));
     return ret;
 }
 
@@ -69,7 +69,6 @@ unordered_map<int, unordered_map<string, int>> read_road(string road_path) {
             road["isDuplex"] = stoi(datalist[6]);
 
             road_dict[road["id"]] = road;
-
         }
         road_file.close();
     }
@@ -107,14 +106,12 @@ unordered_map<int, unordered_map<string, int>> read_cross(string cross_path) {
             cross["road4"] = stoi(datalist[4]);
 
             cross_dict[cross["id"]] = cross;
-
         }
         cross_file.close();
     }
 
     return cross_dict;
 }
-
 
 
 /// 车辆信息读取
@@ -147,7 +144,6 @@ unordered_map<int, unordered_map<string, int>> read_car(string car_path) {
             car["planTime"] = stoi(datalist[4]);
 
             car_dict[car["id"]] = car;
-
         }
         car_file.close();
     }
