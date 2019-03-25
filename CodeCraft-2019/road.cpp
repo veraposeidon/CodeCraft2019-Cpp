@@ -4,6 +4,7 @@
 #include "road.h"
 #include <c++/cassert>
 #include <algorithm>
+#include <c++/iostream>
 
 using namespace std;
 
@@ -55,7 +56,7 @@ void Road::update_road(unordered_map<int, Car> &car_dict) {
         for (int channel = 0; channel < roadChannel; channel++) {
             if (roadStatus[channel][grid] != -1) {
                 // 获取车对象
-                Car car_obj = car_dict[roadStatus[channel][grid]];
+                Car &car_obj = car_dict[roadStatus[channel][grid]];
                 // 标记所有车辆为待处理状态
                 car_obj.change2waiting();
                 // 调度车辆
@@ -77,6 +78,11 @@ void Road::update_car(Car &car_obj, int channel, int grid, unordered_map<int, Ca
     // 断言检测 车辆位置
     int car_channel = car_obj.carGPS["channel"];
     int car_pos = car_obj.carGPS["pos"];
+    if(car_obj.carID == 16180)
+    {
+        cout << car_obj.carID << endl;
+    }
+
     assert(car_channel == channel);
     assert(car_pos == grid);
 

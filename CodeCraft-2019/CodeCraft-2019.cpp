@@ -104,8 +104,6 @@ int main(int argc, char *argv[]) {
     trafficManager manager = trafficManager(topologyDict, crosses, cars, roads);
     manager.inference();
 
-    // TODO:process
-    // TODO:write output file
 
 
     //程序结束用时

@@ -201,10 +201,12 @@ string Car::next_road_name(int cross_id) {
         return NO_ANSWER;
 
     auto index_iter = find(strategy.begin(), strategy.end(), cross_id);
-    int next_cross = *(index_iter++);
+    index_iter++;
+    int next_cross = *(index_iter);
 
     string road_name = to_string(cross_id) + "_" + to_string(next_cross);
-    return road_name;
+
+    return std::string(road_name);
 }
 
 /**

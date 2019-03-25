@@ -20,22 +20,22 @@ using namespace std;
 #define NO_FIND ("NO_FIND")
 
 struct order_info {
-    Car car_obj;
+    int car_id;
     string road_name;
     int next_road_id;
     string next_road_name;
     string direction;
 
     order_info() {
-        car_obj = Car();
+        car_id = -1;
         road_name = "";
         next_road_id = -1;
         next_road_name = "";
         direction = "";
     }
 
-    order_info(Car &car_o, string r_name, int n_r_id, string n_r_name, string dir) {
-        car_obj = car_o;
+    order_info(int carid, string r_name, int n_r_id, string n_r_name, string dir) {
+        car_id = carid;
         road_name = std::move(r_name);
         next_road_id = n_r_id;
         next_road_name = std::move(n_r_name);
