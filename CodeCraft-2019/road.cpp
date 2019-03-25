@@ -21,7 +21,7 @@ Road::Road() {
     // 第一优先级车辆ID
     first_order_car_id = -1;
     // 所有道路格子赋为 -1
-    roadStatus = vector<vector<int>>(0, vector<int>(0, -1));
+    roadStatus = vector<vector<int> >(0, vector<int>(0, -1));
 }
 
 
@@ -45,22 +45,21 @@ Road::Road(const int road_id, const int length, const int speed_limit, const int
     // 第一优先级车辆ID
     first_order_car_id = -1;
     // 所有道路格子赋为 -1
-    roadStatus = vector<vector<int>>(roadChannel, vector<int>(roadLength, -1));
+    roadStatus = vector<vector<int> > (roadChannel, vector<int>(roadLength, -1));
 }
 
 /*
  * 更新道路，时间片内第一次调度
  */
 void Road::update_road(unordered_map<int, Car> &car_dict) {
-    for (int grid = roadLength - 1; grid >= 0; grid--) {
+    for (int grid = roadLength - 1; grid >= 0; --grid) {
         for (int channel = 0; channel < roadChannel; channel++) {
             if (roadStatus[channel][grid] != -1) {
-                // 获取车对象
-                Car &car_obj = car_dict[roadStatus[channel][grid]];
+                int car_id = roadStatus[channel][grid];
                 // 标记所有车辆为待处理状态
-                car_obj.change2waiting();
+                car_dict[car_id].change2waiting();
                 // 调度车辆
-                update_car(car_obj, channel, grid, car_dict);
+                update_car(car_dict[car_id], channel, grid, car_dict);
             }
         }
     }
@@ -78,11 +77,6 @@ void Road::update_car(Car &car_obj, int channel, int grid, unordered_map<int, Ca
     // 断言检测 车辆位置
     int car_channel = car_obj.carGPS.channel;
     int car_pos = car_obj.carGPS.pos;
-    if(car_obj.carID == 16180)
-    {
-        cout << car_obj.carID << endl;
-    }
-
     assert(car_channel == channel);
     assert(car_pos == grid);
 
@@ -91,7 +85,7 @@ void Road::update_car(Car &car_obj, int channel, int grid, unordered_map<int, Ca
 
     // 准备出路口
     if (len_remain < speed) {
-        int front_pos, front_id;
+        int front_pos=-1, front_id=-1;
         bool has_c = has_car(car_channel, car_pos + 1, roadLength, front_pos, front_id);
         // 前方有车
         if (has_c) {
@@ -124,7 +118,7 @@ void Road::update_car(Car &car_obj, int channel, int grid, unordered_map<int, Ca
     }
         // 不准备出路口
     else {
-        int front_pos, front_id;
+        int front_pos=-1, front_id=-1;
         bool has_c = has_car(car_channel, car_pos + 1, car_pos + speed + 1, front_pos, front_id);
         // 前方有车
         if (has_c) {
@@ -192,14 +186,12 @@ bool Road::has_car(int channel, int start, int end, int &position, int &car_id) 
         return false;
     }
 
-    vector<int> channel_detail = roadStatus[channel];
-
     for (int grid = start; grid < end; ++grid) {
-        if (channel_detail[grid] == -1)
+        if (roadStatus[channel][grid] == -1)
             continue;
         else {
             position = grid;
-            car_id = channel_detail[grid];
+            car_id = roadStatus[channel][grid];
             return true;
         }
     }
@@ -215,6 +207,26 @@ bool Road::has_car(int channel, int start, int end, int &position, int &car_id) 
  * @return
  */
 bool Road::get_checkin_place_start(int &e_channel, int &e_pos) {
+    bool all_neg = true;
+    for(int channel = 0;channel<roadChannel;channel++)
+    {
+        for (int pos = 0; pos < roadLength; pos ++)
+        {
+            if (roadStatus[channel][pos] != -1)
+            {
+                all_neg = false;
+                break;
+            }
+        }
+    }
+    if(all_neg)
+    {
+        // 道路为空：第一车道最前方
+        e_channel = 0;
+        e_pos = roadLength - 1;
+        return true;
+    }
+
     for (int channel = 0; channel < roadChannel; ++channel) {
         if (roadStatus[channel][0] != -1)   // 必须要最后一格有车）
             continue;
@@ -247,10 +259,10 @@ bool Road::get_checkin_place_start(int &e_channel, int &e_pos) {
  */
 bool Road::try_on_road(Car &car_obj) {
     // 1. 找车位
-    int e_channel, e_pos;
-    bool suces = get_checkin_place_start(e_channel, e_pos);
+    int e_channel=-1, e_pos=-1;
+    bool succeed = get_checkin_place_start(e_channel, e_pos);
 
-    if (!suces)
+    if (!succeed)
         return false;   // 上路失败
 
     // 2. 根据车速和前车位置 判断新位置
@@ -270,11 +282,11 @@ void Road::update_channel(int channel_id, unordered_map<int, Car> &car_dict) {
     for (int grid = roadLength - 1; grid >= 0; --grid) {
         if (roadStatus[channel_id][grid] != -1) {
             // 获取车对象
-            Car car_obj = car_dict[roadStatus[channel_id][grid]];
+            int car_id = roadStatus[channel_id][grid];
             // 判断车辆状态，END跳过
-            if (car_obj.is_car_waiting()) {
+            if (car_dict[car_id].is_car_waiting()) {
                 // 调度车辆
-                update_car(car_obj, channel_id, grid, car_dict);
+                update_car(car_dict[car_id], channel_id, grid, car_dict);
             }
         }
     }
@@ -340,7 +352,7 @@ double Road::get_road_weight(double dist_k = 1.0) {
 }
 
 /**
- *
+ * 获取本条道路的第一优先级车辆（只考虑出路口的车辆
  * @return
  */
 int Road::get_first_order_car(unordered_map<int, Car> &car_dict) {
@@ -352,10 +364,10 @@ int Road::get_first_order_car(unordered_map<int, Car> &car_dict) {
         for (int channel = 0; channel < roadChannel; ++channel) {
             if (roadStatus[channel][pos] != -1) {
                 // 获取车对象
-                Car car_obj = car_dict[roadStatus[channel][pos]];
+                int car_id = roadStatus[channel][pos];
                 // 是否等待出路口
-                if (car_obj.is_car_waiting_out()) {
-                    first_order_car_id = car_obj.carID; // 记录第一优先车辆ID
+                if (car_dict[car_id].is_car_waiting_out()) {
+                    first_order_car_id = car_id; // 记录第一优先车辆ID
                     return first_order_car_id;
                 }
             }
@@ -374,6 +386,26 @@ int Road::get_first_order_car(unordered_map<int, Car> &car_dict) {
  * @return
  */
 bool Road::get_checkin_place_cross(int &e_channel, int &e_pos, unordered_map<int, Car> &car_dict) {
+    bool all_neg = true;
+    for(int channel = 0;channel<roadChannel;channel++)
+    {
+        for (int pos = 0; pos < roadLength; pos ++)
+        {
+            if (roadStatus[channel][pos] != -1)
+            {
+                all_neg = false;
+                break;
+            }
+        }
+    }
+    if(all_neg)
+    {
+        // 道路为空：第一车道最前方
+        e_channel = 0;
+        e_pos = roadLength - 1;
+        return true;
+    }
+
     for (int channel = 0; channel < roadChannel; ++channel) {
         // 最后一格有车，判断其状态
         if (roadStatus[channel][0] != -1) {

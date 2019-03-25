@@ -19,7 +19,7 @@ public:
     int roadOrigin;         // 道路起点
     int roadDest;           // 道路终点
     vector<vector<int> > roadStatus;    // 道路详情
-    int first_order_car_id;
+    int first_order_car_id; // 出路口第一优先级车辆
 
     // 默认构造函数
     Road();
