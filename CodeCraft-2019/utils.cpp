@@ -102,7 +102,7 @@ unordered_map<int, unordered_map<string, int>> read_cross(string cross_path) {
             unordered_map<string, int> cross;
             cross["id"] = stoi(datalist[0]);
             cross["road1"] = stoi(datalist[1]);
-            cross["road1"] = stoi(datalist[2]);
+            cross["road2"] = stoi(datalist[2]);
             cross["road3"] = stoi(datalist[3]);
             cross["road4"] = stoi(datalist[4]);
 

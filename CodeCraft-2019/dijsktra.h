@@ -17,6 +17,7 @@ topology_type create_topology(const unordered_map<int, unordered_map<string, int
 
 
 
+
 // 定义一个tuple做key值
 // 致谢： http://coliru.stacked-crooked.com/a/dede823b40af4662
 typedef std::tuple<int, int> key_weight;
@@ -58,5 +59,8 @@ public:
     // 最短路径搜索
     vector<int> short_path_finding(int from_node, int to_node);
 };
+
+// 创建邻接表
+Graph create_graph(topology_type &topology_dict);
 
 #endif //CODECRAFT_2019_DIJSKTRA_H

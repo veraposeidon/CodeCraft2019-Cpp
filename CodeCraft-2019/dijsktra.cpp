@@ -57,6 +57,24 @@ topology_type create_topology(const unordered_map<int, unordered_map<string, int
     return topology;
 }
 
+/**
+ * 从拓扑数据生成有向图（邻接表）
+ * @param topology_dict
+ * @return
+ */
+Graph create_graph(topology_type &topology_dict) {
+    Graph graph = Graph();
+    for (topology_type::const_iterator item = topology_dict.begin(); item != topology_dict.end(); item++) {
+        int road_begin = (*item).first;
+        for (auto &road : topology_dict[road_begin]) {
+            unordered_map<string, int> ends = road;
+            graph.add_edge(ends["start"], ends["end"], ends["weight"]);
+        }
+    }
+
+    return graph;
+}
+
 
 Graph::Graph() {
     edges = unordered_map<int, vector<int> >();

@@ -319,3 +319,85 @@ void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unor
     }
 }
 
+/**
+ * 调度路口多次
+ * @param road_dict
+ * @param car_dict
+ * @param loops_every_cross
+ */
+void
+Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross) {
+    for (int i = 0; i < loops_every_cross; i++) {
+        // 获取待调度道路和车辆信息
+        unordered_map<int, order_info> next_roads = get_first_order_info(road_dict, car_dict);
+        // 如果没有待调度车辆，则判断该路口完成
+        if (next_roads.empty()) {
+            nothing2do = true;
+            return;
+        }
+
+        // 路口调度信息
+        vector<int> roadIDs(0);
+        for (auto &road : next_roads) {
+            int road_id = road.first;
+            roadIDs.push_back(road_id);
+        }
+        sort(roadIDs.begin(), roadIDs.end());   // 排序
+
+        // 根据优先级，分别判断每个路口是否满足出路口（路口规则）
+        for (int roadID : roadIDs) {
+            Car last_car = next_roads[roadID].car_obj;   // 待调度车辆
+            while (next_roads.find(roadID) != next_roads.end()) //确保路口的每一轮调度都最大化道路的运输能力，除非转弯顺序不允许或者没有待转弯车辆了。
+            {
+                // 对方向进行判断
+                string direct = next_roads[roadID].direction;
+                if (direct == "D") {
+                    // 直行优先
+                    ;
+                } else if (direct == "L") {
+                    //左转需要判断有无直行到目标道路车辆
+                    // 有直行车辆冲突，跳过
+                    if (has_straight_to_conflict(next_roads, next_roads[roadID].next_road_id)) {
+                        break; //跳出while 调度下一道路)
+                    }
+                } else if (direct == "R") {
+                    // 右转需要哦安短有无直行或左转到目标道路车辆
+                    // 有直行或左转车辆冲突，跳过
+                    if (has_straight_left_to_conflict(next_roads, next_roads[roadID].next_road_id)) {
+                        break;  // 跳出while 调度下一道路
+                    }
+                }
+
+                // 调度车辆
+                Car car_o = next_roads[roadID].car_obj;
+                Road this_road = road_dict[next_roads[roadID].road_name];
+                Road next_road = road_dict[next_roads[roadID].next_road_name];
+
+                move_car_across(car_o, this_road, next_road, car_dict);
+
+                // 只更新该道路的优先序车辆
+                int road_id = -1;
+                order_info first_info;
+                bool got = get_road_first_order_info(next_roads[roadID].road_name, road_dict, car_dict, road_id,
+                                                     first_info);
+                // 该道路还有待调度车辆
+                if (got) {
+                    next_roads[road_id] = first_info;
+                    // 判断更新后的第一辆车还是不是之前的
+                    Car this_car = next_roads[roadID].car_obj;
+                    if (this_car.carID == last_car.carID) {
+                        break; //  还是上一辆，说明没动，跳出，调度下一道路
+                    }else{
+                        last_car = this_car;
+                    }
+                }else{
+                    // 清除字典信息
+                    next_roads.erase(next_roads.find(roadID));
+                    break;
+                }
+            }
+        }
+
+    }
+}
+
