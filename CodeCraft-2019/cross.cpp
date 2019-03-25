@@ -161,7 +161,7 @@ bool Cross::get_road_first_order_info(string road_name, unordered_map<string, Ro
                 // 车辆回家
                 road_dict[road_name].move_car_home(car_obj);
                 // 更新车道后方信息
-                road_dict[road_name].update_channel(car_obj.carGPS["channel"], car_dict);
+                road_dict[road_name].update_channel(car_obj.carGPS.channel, car_dict);
                 // 除去道路第一优先序车辆记录
                 road_dict[road_name].first_order_car_id = -1;
                 // 继续更新本条道路的第一优先级
@@ -230,9 +230,9 @@ void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unor
         if (next_road.last_row_are_waiting(car_dict)) {
             car_obj.change2waiting_out();  // 后面的车不需要更新
         } else {
-            int car_pos = car_obj.carGPS["pos"];
+            int car_pos = car_obj.carGPS.pos;
             int new_pos = this_road.roadLength - 1;  // 注意下标
-            int car_channel = car_obj.carGPS["channel"];
+            int car_channel = car_obj.carGPS.channel;
 
             // 车已在道路前方，保持不动
             if (car_pos == new_pos) {
@@ -252,8 +252,8 @@ void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unor
     }
 
     // 前方道路没堵住
-    int car_pos = car_obj.carGPS["pos"];
-    int car_channel = car_obj.carGPS["channel"];
+    int car_pos = car_obj.carGPS.pos;
+    int car_channel = car_obj.carGPS.channel;
     cout << (this_road.roadID) << endl;
     assert(this_road.roadStatus[car_channel][car_pos] == car_obj.carID);    // 聊胜于无的断言
 

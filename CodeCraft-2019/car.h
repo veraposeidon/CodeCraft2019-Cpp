@@ -4,22 +4,48 @@
 
 #ifndef CODECRAFT_2019_CAR_H
 #define CODECRAFT_2019_CAR_H
+
 #include "dijsktra.h"
 #include <unordered_map>
 #include <vector>
 #include <string>
-using  namespace std;
-#define NO_ANSWER "NONE"
-//  {'roadID': None, 'channel': None, 'pos': None, 'now': None, 'next': None}
-typedef unordered_map<string, int> GPS_type;
+
+using namespace std;
+#define NO_ANSWER ("NONE")
 
 enum CarStatus {
-    WAITING_HOME,                   // 在家准备出发
-    ON_ROAD_STATE_END,              // 在路上，调度完毕
-    ON_ROAD_STATE_WAITING,          // 等待调度
-    ON_ROAD_STATE_WAITING_OUT,      // 出路口等待调度
-    ON_ROAD_STATE_WAITING_INSIDE,   // 不出路口等待调度
-    SUCCEED                         // 成功抵达终点
+    WAITING_HOME=122,                   // 在家准备出发
+    ON_ROAD_STATE_END=123,              // 在路上，调度完毕
+    ON_ROAD_STATE_WAITING=124,          // 等待调度
+    ON_ROAD_STATE_WAITING_OUT=125,      // 出路口等待调度
+    ON_ROAD_STATE_WAITING_INSIDE=126,   // 不出路口等待调度
+    SUCCEED=127                         // 成功抵达终点
+};
+
+
+struct GPS {
+    int roadID;
+    int channel;
+    int pos;
+    int now;
+    int next;
+    GPS(int r_i, int ch, int po, int no, int ne)
+    {
+        roadID = r_i;
+        channel = ch;
+        pos = po;
+        now = no;
+        next = ne;
+    }
+    GPS()
+    {
+        roadID = -1;
+        channel = -1;
+        pos = -1;
+        now = -1;
+        next = -1;
+    }
+
 };
 
 
@@ -32,12 +58,13 @@ public:
     int carPlanTime;        // 预计发车时间
     CarStatus carStatus;    // 车辆状态
     int startTime;          // 实际发车车间
-    GPS_type carGPS;        // 定位
+    GPS carGPS;        // 定位
     vector<int> strategy;   // 规划路径
     vector<int> passed_by;  // 记录路过的路段，该结果为最终结果
 
     // 构造函数
     Car();
+
     Car(int car_id, int origin, int destination, int speed, int plan_time);
 
     // 判断是否结束
@@ -89,7 +116,6 @@ public:
     void update_new_strategy(Graph &graph);
 
 };
-
 
 
 #endif //CODECRAFT_2019_CAR_H

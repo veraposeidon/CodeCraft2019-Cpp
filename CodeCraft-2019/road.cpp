@@ -76,8 +76,8 @@ void Road::update_road(unordered_map<int, Car> &car_dict) {
  */
 void Road::update_car(Car &car_obj, int channel, int grid, unordered_map<int, Car> &car_dict) {
     // 断言检测 车辆位置
-    int car_channel = car_obj.carGPS["channel"];
-    int car_pos = car_obj.carGPS["pos"];
+    int car_channel = car_obj.carGPS.channel;
+    int car_pos = car_obj.carGPS.pos;
     if(car_obj.carID == 16180)
     {
         cout << car_obj.carID << endl;
@@ -302,8 +302,8 @@ bool Road::last_row_are_waiting(unordered_map<int, Car> &car_dict) {
 void Road::move_car_home(Car &car_obj) {
     assert(car_obj.is_car_way_home());  //断言
     int car_id = car_obj.carID;
-    int car_channel = car_obj.carGPS["channel"];
-    int car_pos = car_obj.carGPS["pos"];
+    int car_channel = car_obj.carGPS.channel;
+    int car_pos = car_obj.carGPS.pos;
     assert(roadStatus[car_channel][car_pos] == car_id); //直接断言 车辆所处位置正确
 
     roadStatus[car_channel][car_pos] = -1;  //将车辆所在位置置空
