@@ -20,13 +20,13 @@ topology_type create_topology(const unordered_map<int, unordered_map<string, int
 
 // 定义一个tuple做key值
 // 致谢： http://coliru.stacked-crooked.com/a/dede823b40af4662
-typedef std::tuple<int, int> key_weight;
+typedef std::tuple<size_t , size_t> key_weight;
 
 struct key_hash : public std::unary_function<key_weight, std::size_t>
 {
     std::size_t operator()(const key_weight& k) const
     {
-        return static_cast<size_t>(std::get<0>(k) * 1000 + std::get<1>(k));     // TODO: 注意啊，保持独立，编号为ID1-ID2。
+        return static_cast<size_t>(std::get<0>(k) * 10000000 + std::get<1>(k));     // TODO: 注意啊，保持独立，编号为ID1-ID2。
     }
 };
 

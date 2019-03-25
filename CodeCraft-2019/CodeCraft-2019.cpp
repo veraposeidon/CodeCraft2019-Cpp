@@ -83,7 +83,6 @@ int main(int argc, char *argv[]) {
         }
     }
     road_dict.clear();      // 清空。没有清干净
-
     // 4. 生成路口对象
     unordered_map<int, Cross> crosses;
     for (unordered_map<int, unordered_map<string, int>>::const_iterator item = cross_dict.begin();
@@ -99,6 +98,18 @@ int main(int argc, char *argv[]) {
         crosses[crossID] = cross_;
     }
     cross_dict.clear();
+
+    for (auto &start : topologyDict) {
+        int road_begin = start.first;
+        for (auto item = topologyDict[road_begin].begin(); item != topologyDict[road_begin].end(); item++) {
+            unordered_map<string, int> ends = (*item);
+            int road_end = ends["end"];
+            string road_name = to_string(road_begin) + "_" + to_string(road_end);
+            double road_weight = roads[road_name].get_road_weight(1.0);
+            // 注意是整形的
+            (*item)["weight"] = (int) ((*item)["length"] * 1.0 * (1.0 + road_weight * ROAD_WEIGHTS_CALC));
+        }
+    }
 
     // 5. 调度中心
     trafficManager manager = trafficManager(topologyDict, crosses, cars, roads);

@@ -79,8 +79,8 @@ bool Cross::if_cross_ended() {
  * @return
  */
 string Cross::get_direction(int road_id, int next_road_id) {
-    int index_now = 0, index_next = 0;
-    for (int i = 0; i < roads.size(); ++i) {
+    uint8_t index_now = 0, index_next = 0;
+    for (uint8_t i = 0; i < roads.size(); ++i) {
         if (roads[i] == road_id) {
             index_now = i;
         }

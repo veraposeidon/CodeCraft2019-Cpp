@@ -10,16 +10,13 @@
 #include <algorithm>
 
 using namespace std;
-#define WEIGHT_MAX 10000
+
 #define SEARCH_END (-122)
 
 topology_type create_topology(const unordered_map<int, unordered_map<string, int> > &road_dict) {
+    // 初始化
     topology_type topology;
 
-//    for (auto iter = road_dict.begin(); iter!=road_dict.end(); ++iter)
-//    {
-//
-//    }
     // 测试
     for (const auto &road : road_dict) {
         unordered_map<string, int> item = road.second;
