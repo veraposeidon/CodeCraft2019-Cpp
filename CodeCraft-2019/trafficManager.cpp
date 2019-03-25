@@ -104,7 +104,7 @@ int trafficManager::update_cars(vector<int> &carAtHomeList, vector<int> &carOnRo
 bool trafficManager::is_task_completed() {
     for (unordered_map<int, Car>::const_iterator item = carDict.begin(); item != carDict.end(); item++) {
         int car_id = (*item).first;
-        if (!carDict[car_id].is_ended())
+        if (! carDict[car_id].is_ended())
             return false;
     }
     return true;
@@ -224,17 +224,17 @@ void trafficManager::inference() {
         carAtHomeList.clear();
         carOnRoadList.clear();
         int carsOnEnd = update_cars(carAtHomeList, carOnRoadList);
-        int lenOnRoad = carOnRoadList.size();
-        int lenAtHome = carAtHomeList.size();
+        size_t lenOnRoad = carOnRoadList.size();
+        size_t lenAtHome = carAtHomeList.size();
 
         // TODO: 动态更改地图车辆容量
         // TODO: 动态上路数目
         if(lenOnRoad < CARS_ON_ROAD)
         {
-            int how_many = min(CARS_ON_ROAD - lenOnRoad, lenAtHome);
+            size_t how_many = min(CARS_ON_ROAD - lenOnRoad, lenAtHome);
 
             int count_start = 0;
-            for (int i = 0; i < how_many; ++i) {
+            for (unsigned int i = 0; i < how_many; ++i) {
                 int car_id = carAtHomeList[i];
                 Car &car_obj = carDict[car_id];
                 string road_name = car_obj.try_start(graph, TIME);
@@ -254,7 +254,6 @@ void trafficManager::inference() {
         }
     }
     cout << "Tasks Completed! and Schedule Time is: " + to_string(TIME) << endl;
-
 }
 
 

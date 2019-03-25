@@ -86,7 +86,7 @@ public:
     string next_road_name(int cross_id);
 
     // 更新策略的时候一定要注意不走回头路
-    void update_new_strategy(Graph graph);
+    void update_new_strategy(Graph &graph);
 
 };
 

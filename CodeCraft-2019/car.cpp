@@ -213,7 +213,7 @@ string Car::next_road_name(int cross_id) {
  * 更新策略的时候一定要注意不走回头路
  * @param graph
  */
-void Car::update_new_strategy(Graph graph) {
+void Car::update_new_strategy(Graph &graph) {
     if (this->is_car_way_home())    // 回家路上没有用
         return;
 

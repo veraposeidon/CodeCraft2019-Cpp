@@ -99,22 +99,10 @@ int main(int argc, char *argv[]) {
     }
     cross_dict.clear();
 
-    for (auto &start : topologyDict) {
-        int road_begin = start.first;
-        for (auto item = topologyDict[road_begin].begin(); item != topologyDict[road_begin].end(); item++) {
-            unordered_map<string, int> ends = (*item);
-            int road_end = ends["end"];
-            string road_name = to_string(road_begin) + "_" + to_string(road_end);
-            double road_weight = roads[road_name].get_road_weight(1.0);
-            // 注意是整形的
-            (*item)["weight"] = (int) ((*item)["length"] * 1.0 * (1.0 + road_weight * ROAD_WEIGHTS_CALC));
-        }
-    }
 
     // 5. 调度中心
     trafficManager manager = trafficManager(topologyDict, crosses, cars, roads);
     manager.inference();
-
 
 
     //程序结束用时
