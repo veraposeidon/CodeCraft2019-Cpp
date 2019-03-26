@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
         for(auto &item: result)
         {
             int car_id = item.first;
-            int time = item.second.startTiem;
+            int time = item.second.startTime;
             std::stringstream ss;
             for (size_t i = 0; i < item.second.passedBy.size(); ++i) {
                 if(i!=0)

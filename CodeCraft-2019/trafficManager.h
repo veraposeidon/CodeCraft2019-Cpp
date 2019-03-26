@@ -31,17 +31,17 @@
 #include "cross.h"
 
 struct schedule_result {
-    int startTiem;
+    int startTime;
     vector<int> passedBy;
 
     schedule_result() {
-        startTiem = 0;
+        startTime = 0;
         passedBy = vector<int>();
     }
 
-    schedule_result(int ttime, vector<int> passd) {
-        startTiem = ttime;
-        passedBy = std::move(passd);
+    schedule_result(int time, vector<int> passby) {
+        startTime = time;
+        passedBy = std::move(passby);
     }
 };
 

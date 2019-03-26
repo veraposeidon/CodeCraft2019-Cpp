@@ -44,23 +44,40 @@ struct key_equal : public std::binary_function<key_weight, key_weight, bool>
 
 typedef std::unordered_map<const key_weight, double ,key_hash,key_equal> map_weight;
 
+// 用于定义邻接表 // 权重放前边
+typedef pair<int,int> iPair;
 
 class Graph{
 public:
     unordered_map<int, vector<int>> edges;  // 边
-    map_weight weights; // 权重
+    map_weight weights;     // 权重
+
+    vector<vector<iPair > > adj;     // 邻接表
+    size_t vertexNum;          // 顶点数量
+    vector<int > cross_list;
+    unordered_map <int, int> checkMap;  // 顶点对应标号
 
     Graph();
+    Graph(vector<int> crossList);
 
     // 添加边
     void add_edge(int from_node, int to_note, double weight);
+
+    // 邻接表添加权重
+    void addEdge(int u, int v, int wt);
+
     // 更新权重
     void update_weight(int from_node, int to_node, double weight);
-    // 最短路径搜索
+
+    // 最短路径搜索(普通方式)
     vector<int> short_path_finding(int from_node, int to_node);
+
+    // 最短路径搜索（binary heap）
+    vector<int> shortestPath_binary(int src, int target);
+    // Binary Heap
 };
 
 // 创建邻接表
-Graph create_graph(topology_type &topology_dict);
+Graph create_graph(topology_type &topology_dict, vector<int> cross_list);
 
 #endif //CODECRAFT_2019_DIJSKTRA_H

@@ -21,7 +21,7 @@ trafficManager::trafficManager(topology_type &topo, unordered_map<int, Cross> &c
     crossDict = cross_dict;
     carDict = car_dict;
     roadDict = road_dict;
-    graph = Graph();
+
     TIME = 0;
     TIME_STEP = 1;
     result = unordered_map<int, schedule_result>();
@@ -35,6 +35,8 @@ trafficManager::trafficManager(topology_type &topo, unordered_map<int, Cross> &c
         crossList.push_back(cross_id);
     }
     sort(crossList.begin(), crossList.end());   // 升序排布
+
+    graph = Graph(crossList);
 }
 
 /**
@@ -120,7 +122,7 @@ Graph trafficManager::get_new_map() {
             (*item)["weight"] = (int) ((*item)["length"] * 1.0 * (1.0 + road_weight * ROAD_WEIGHTS_CALC));
         }
     }
-    Graph graph = create_graph(topology);
+    Graph graph = create_graph(topology, crossList);
     return graph;
 }
 
