@@ -107,13 +107,14 @@ void Road::update_car(Car &car_obj, int channel, int grid, unordered_map<int, Ca
         }
             // 前方无车
         else {
-            // 前方到家
-            if (car_obj.is_car_way_home()) {
-                move_car_home(car_obj); // 到家   TODO: 回家不应该立即结束，也应等待调度
-            } else {
-                // 前方出路口
-                car_obj.change2waiting_out();  // 标记为等待调度出路口
-            }
+//            // 前方到家
+//            if (car_obj.is_car_way_home()) {
+//                move_car_home(car_obj); // 到家   TODO: 回家不应该立即结束，也应等待调度
+//            } else {
+//                // 前方出路口
+//                car_obj.change2waiting_out();  // 标记为等待调度出路口
+//            }
+            car_obj.change2waiting_out();  // 标记为等待调度出路口
         }
     }
         // 不准备出路口

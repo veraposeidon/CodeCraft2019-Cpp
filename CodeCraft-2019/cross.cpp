@@ -157,15 +157,23 @@ bool Cross::get_road_first_order_info(string road_name, unordered_map<string, Ro
             Car &car_obj = car_dict[car_id];
             if (NO_ANSWER == car_obj.next_road_name(crossID))    // 是否下一站到家
             {
-                // TODO： 此处优化逻辑
-                // 车辆回家
-                road_dict[road_name].move_car_home(car_obj);
-                // 更新车道后方信息
-                road_dict[road_name].update_channel(car_obj.carGPS.channel, car_dict);
-                // 除去道路第一优先序车辆记录
-                road_dict[road_name].first_order_car_id = -1;
-                // 继续更新本条道路的第一优先级
-                continue;
+                int road_now_id = road_dict[road_name].roadID;
+                string next_road_name = "HOME";
+                int road_next_id2 = -1;
+
+                for (size_t i = 0; i < roads.size(); ++i) {
+                    if (roads[i] == road_now_id) {
+                        int nexid = (i + 2) % 4;
+                        road_next_id2 = roads[nexid];
+                        break;
+                    }
+                }
+
+                assert(road_now_id != road_next_id2);
+                string direction = "D";
+                first_order = order_info(car_obj.carID, road_name, road_next_id2, next_road_name, direction);
+                road_id = road_now_id;
+                return true;
             } else {
                 // 不回家车辆的下一条路名称
                 string next_road_name = car_obj.next_road_name(crossID);
@@ -368,12 +376,21 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
                 }
 
                 // 调度车辆
-                Car &car_o = car_dict[next_roads[roadID].car_id] ;
-
-                Road &this_road = road_dict[next_roads[roadID].road_name];
-                Road &next_road = road_dict[next_roads[roadID].next_road_name];
-
-                move_car_across(car_o, this_road, next_road, car_dict);
+                // 前方到家
+                if (next_roads[roadID].next_road_name == "HOME") {
+                    Car &car_o = car_dict[next_roads[roadID].car_id];
+                    Road &this_road = road_dict[next_roads[roadID].road_name];
+                    this_road.move_car_home(car_o);
+                    // 更新车道后方信息
+                    this_road.update_channel(car_o.carGPS.channel, car_dict);
+                    // 除去道路第一优先序车辆记录
+                    this_road.first_order_car_id = -1;
+                } else {
+                    Car &car_o = car_dict[next_roads[roadID].car_id];
+                    Road &this_road = road_dict[next_roads[roadID].road_name];
+                    Road &next_road = road_dict[next_roads[roadID].next_road_name];
+                    move_car_across(car_o, this_road, next_road, car_dict);
+                }
 
                 // 只更新该道路的优先序车辆
                 int road_id = -1;

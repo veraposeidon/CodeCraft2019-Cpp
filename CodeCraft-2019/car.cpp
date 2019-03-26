@@ -220,7 +220,7 @@ void Car::update_new_strategy(Graph &graph) {
         // 深拷贝效率低，原有权重替换即可
         double origin_weight = graph.weights[make_tuple(next_cross, this_cross)];
         // 更换权重
-        graph.update_weight(next_cross, this_cross, 1000);
+        graph.update_weight(next_cross, this_cross, 1000.0);
         // 重新规划路线
         strategy = graph.short_path_finding(next_cross, carTo); // 下个路口到家的路
         // 换回原有权重
