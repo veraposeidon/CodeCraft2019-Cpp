@@ -2,9 +2,9 @@
 // Created by shen on 2019/3/25.
 //
 
-#include <c++/algorithm>
+#include <algorithm>
 #include <cassert>
-#include <c++/iostream>
+#include <iostream>
 #include "cross.h"
 
 Cross::Cross() {

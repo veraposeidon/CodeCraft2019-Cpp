@@ -6,6 +6,7 @@
 #include "cross.h"
 #include "trafficManager.h"
 #include<ctime>
+#include <sstream>
 
 
 int main(int argc, char *argv[]) {
@@ -103,6 +104,32 @@ int main(int argc, char *argv[]) {
     // 5. 调度中心
     trafficManager manager = trafficManager(topologyDict, crosses, cars, roads);
     manager.inference();
+
+    // unordered_map<int, schedule_result>();
+    auto result = manager.get_result();
+
+    // 三/写文件
+    ofstream answerFile(answerPath);
+    if(answerFile.is_open())
+    {
+        for(auto &item: result)
+        {
+            int car_id = item.first;
+            int time = item.second.startTiem;
+            std::stringstream ss;
+            for (size_t i = 0; i < item.second.passedBy.size(); ++i) {
+                if(i!=0)
+                    ss << ", ";
+                ss << item.second.passedBy[i];
+            }
+            string s = ss.str();
+
+            string singletxt = "(" + to_string(car_id) + ", " + to_string(time) + ", " + s + ")" + "\n";
+
+            answerFile << singletxt;
+        }
+    }
+    answerFile.close();
 
 
     //程序结束用时

@@ -2,7 +2,7 @@
 // Created by shen on 2019/3/24.
 //
 
-#include <c++/algorithm>
+#include <algorithm>
 #include "dijsktra.h"
 #include "car.h"
 
