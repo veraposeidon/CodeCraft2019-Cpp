@@ -10,7 +10,35 @@
 #include <string>
 using  namespace std;
 
-typedef unordered_map<int, vector<unordered_map<string, int>>> topology_type;
+struct topo {
+    int start;
+    int end;
+    int length;
+    int road_id;
+    int channel;
+    double weight;
+
+    topo() {
+        start = -1;
+        end = -1;
+        length = -1;
+        road_id = -1;
+        channel = -1;
+        weight = 0.0;
+    }
+
+    topo(int s, int e, int l, int ri, int ch) {
+        start = s;
+        end = e;
+        length = l;
+        road_id = ri;
+        channel = ch;
+        weight = 0.0;
+    }
+
+};
+
+typedef unordered_map<int, vector<topo> > topology_type;
 
 // 创建拓扑图
 topology_type create_topology(const unordered_map<int, unordered_map<string, int>> &road_dict);
@@ -45,7 +73,7 @@ struct key_equal : public std::binary_function<key_weight, key_weight, bool>
 typedef std::unordered_map<const key_weight, double ,key_hash,key_equal> map_weight;
 
 // 用于定义邻接表 // 权重放前边
-typedef pair<int,int> iPair;
+typedef pair<int, double> iPair;
 
 class Graph{
 public:
@@ -64,7 +92,7 @@ public:
     void add_edge(int from_node, int to_note, double weight);
 
     // 邻接表添加权重
-    void addEdge(int u, int v, int wt);
+    void addEdge(int u, int v, double wt);
 
     // 更新权重
     void update_weight(int from_node, int to_node, double weight);

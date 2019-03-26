@@ -114,12 +114,12 @@ Graph trafficManager::get_new_map() {
     for (auto &start : topology) {
         int road_begin = start.first;
         for (auto item = topology[road_begin].begin(); item != topology[road_begin].end(); item++) {
-            unordered_map<string, int> ends = (*item);
-            int road_end = ends["end"];
+            topo ends = (*item);
+            int road_end = ends.end;
             string road_name = to_string(road_begin) + "_" + to_string(road_end);
             double road_weight = roadDict[road_name].get_road_weight(1.0);
             // 注意是整形的
-            (*item)["weight"] = (int) ((*item)["length"] * 1.0 * (1.0 + road_weight * ROAD_WEIGHTS_CALC));
+            (*item).weight = (*item).length * (1.0 + road_weight * ROAD_WEIGHTS_CALC);
         }
     }
     Graph graph = create_graph(topology, crossList);

@@ -9,7 +9,7 @@
 
 // 场上车辆数目
 //CARS_ON_ROAD = 2500  // 大地图2500辆
-#define CARS_ON_ROAD  (1200)
+#define CARS_ON_ROAD  (1100)    // 大地图2200  // 小地图1200辆
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)

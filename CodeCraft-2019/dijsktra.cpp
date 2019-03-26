@@ -1,7 +1,5 @@
 #include <utility>
 
-#include <utility>
-
 //
 // Created by shen on 2019/3/24.
 //
@@ -32,27 +30,15 @@ topology_type create_topology(const unordered_map<int, unordered_map<string, int
         auto length = item["length"];
         auto road_id = item["id"];
         auto channel = item["channel"];
-        unordered_map<string, int> way = {
-                {"start",   start},
-                {"end",     end},
-                {"length",  length},
-                {"road_id", road_id},
-                {"channel", channel}
-        };
+        topo way(start, end, length, road_id, channel);
+
         // 正向
         topology[start].push_back(way);
 
         // 反向
         if (item["isDuplex"] == 1) {
-            unordered_map<string, int> way = {
-                    {"start",   end},
-                    {"end",     start},
-                    {"length",  length},
-                    {"road_id", road_id},
-                    {"channel", channel}
-            };
-
-            topology[end].push_back(way);
+            topo way2(end, start, length, road_id, channel);
+            topology[end].push_back(way2);
         }
     }
 
@@ -70,8 +56,8 @@ Graph create_graph(topology_type &topology_dict, vector<int> cross_list) {
     for (topology_type::const_iterator item = topology_dict.begin(); item != topology_dict.end(); item++) {
         int road_begin = (*item).first;
         for (auto &road : topology_dict[road_begin]) {
-            unordered_map<string, int> ends = road;
-            graph.add_edge(ends["start"], ends["end"], ends["weight"]);
+            topo ends = road;
+            graph.add_edge(ends.start, ends.end, ends.weight);
         }
     }
 
@@ -108,7 +94,7 @@ void Graph::add_edge(const int from_node, const int to_node, const double weight
     // 添加到邻接表
     int from_node_index = checkMap[from_node];
     int to_node_index = checkMap[to_node];
-    addEdge(from_node_index, to_node_index,(int)weight);
+    addEdge(from_node_index, to_node_index, weight);
 }
 
 /// 更新权重
@@ -125,7 +111,7 @@ void Graph::update_weight(const int from_node, const int to_node, const double w
     for (auto &iter : adj[from_node_index]) {
         if(iter.first == to_node_index)
         {
-            iter.second = int(weight);
+            iter.second = weight;
         }
     }
 }
@@ -213,7 +199,7 @@ vector<int> Graph::short_path_finding(const int from_node, const int to_node) {
  * @param v
  * @param wt
  */
-void Graph::addEdge(int u, int v, int wt) {
+void Graph::addEdge(int u, int v, double wt) {
     adj[u].push_back(make_pair(v, wt));
 }
 
@@ -226,14 +212,15 @@ void Graph::addEdge(int u, int v, int wt) {
  * @param target
  * @return
  */
+typedef pair<double, int> ority_pair;
 vector<int> Graph::shortestPath_binary(int src, int target) {
     vector<int > result(0);
 
     int src_index = checkMap[src];
     int target_index = checkMap[target];
 
-    priority_queue<iPair, vector<iPair>, greater<iPair> > pq;
-    vector<int> dist(vertexNum, INF);
+    priority_queue<ority_pair, vector<ority_pair>, greater<ority_pair> > pq;
+    vector<double> dist(vertexNum, INF);
     vector<int> path(0);
     // Insert source itself in priority queue and initialize
     // its distance as 0.
@@ -258,7 +245,7 @@ vector<int> Graph::shortestPath_binary(int src, int target) {
             // Get vertex label and weight of current adjacent
             // of u.
             int v = x.first;
-            int weight = x.second;
+            double weight = x.second;
             // If there is shorted path to v through u.
             if (dist[v] > dist[u] + weight) {
                 // Updating distance of v
