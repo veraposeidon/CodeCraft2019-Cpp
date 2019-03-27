@@ -26,7 +26,7 @@ trafficManager::trafficManager(topology_type &topo, unordered_map<int, Cross> &c
     TIME_STEP = 1;
     result = unordered_map<int, schedule_result>();
     launch_order = vector<int>();
-    get_start_list(launch_order);
+
 
     crossList = vector<int>(0);
     for (auto &cross : crossDict)
@@ -35,7 +35,7 @@ trafficManager::trafficManager(topology_type &topo, unordered_map<int, Cross> &c
         crossList.push_back(cross_id);
     }
     sort(crossList.begin(), crossList.end());   // 升序排布
-
+    get_start_list(launch_order);
     graph = Graph(crossList);
 }
 
@@ -45,10 +45,144 @@ trafficManager::trafficManager(topology_type &topo, unordered_map<int, Cross> &c
  * @param order
  */
 void trafficManager::get_start_list(vector<int> &order) {
+#ifdef START_RANDOM
+    // 随机引擎
+    auto random_ = std::default_random_engine(RANDOM_SEED);
+    //  车辆列表
     for (unordered_map<int, Car>::const_iterator item = carDict.begin(); item != carDict.end(); item++) {
         int carID = (*item).first;
         order.push_back(carID);
     }
+    // 随机打乱
+    shuffle(order.begin(), order.end(), random_);
+    return ;
+#endif
+
+#ifdef START_BY_TIME
+    // 建立pair容器
+    vector<pair<int, int>> id_time;
+    for (unordered_map<int, Car>::const_iterator item = carDict.begin(); item != carDict.end(); item++) {
+        int carID = (*item).first;
+        int time = carDict[carID].carPlanTime;
+        id_time.emplace_back(carID, time);
+    }
+    sort(id_time.begin(), id_time.end(),[=](pair<int,int>&a, pair<int,int>&b){return a.second < b.second;});
+    for(auto &item : id_time)
+    {
+        order.push_back(item.first);
+    }
+    return;
+#endif
+
+#ifdef START_BY_TIME_AND_PLACE
+    // 先获取地方分布
+    unordered_map<int, vector<pair<int, int>>> area_dist;
+    for (unordered_map<int, Car>::const_iterator item = carDict.begin(); item != carDict.end(); item++) {
+        int carID = (*item).first;
+        int cross_id = carDict[carID].carFrom;
+        int time = carDict[carID].carPlanTime;
+        area_dist[cross_id].push_back(make_pair(carID, time));
+    }
+
+    // 对每个出发点的车按时间排序
+    for (auto &id_time : area_dist) {
+        int cross_id = id_time.first;
+        sort(area_dist[cross_id].begin(), area_dist[cross_id].end(),
+             [=](pair<int, int> &a, pair<int, int> &b) { return a.second < b.second; });
+    }
+
+    // 轮流抽出发点
+    while (order.size() < carDict.size()) {
+        for (auto &id_time : area_dist) {
+            int cross_id = id_time.first;
+            if (!area_dist[cross_id].empty()) {
+                order.push_back(area_dist[cross_id][0].first);
+                area_dist[cross_id].erase(area_dist[cross_id].begin());
+            }
+        }
+    }
+    assert(order.size() == carDict.size());
+    return;
+#endif
+#ifdef START_BY_DIRECTION   // 先东西相向而行 // 再跑其他车辆
+    int eastUp = 20;
+    int westBegin = 50;
+
+    // 先获取地方分布
+    unordered_map<int, vector<pair<int, int>>> area_dist;
+    for (unordered_map<int, Car>::const_iterator item = carDict.begin(); item != carDict.end(); item++) {
+        int carID = (*item).first;
+        int cross_id = carDict[carID].carFrom;
+        int time = carDict[carID].carPlanTime;
+        area_dist[cross_id].push_back(make_pair(carID, time));
+    }
+
+    // 对每个出发点的车按时间排序
+    for(auto &id_time : area_dist)
+    {
+        int cross_id = id_time.first;
+        sort(area_dist[cross_id].begin(),area_dist[cross_id].end(),[=](pair<int,int>&a, pair<int,int>&b){return a.second < b.second;});
+    }
+
+    // 编号与距离
+    vector<pair<int, int> > east_start(0);
+    vector<pair<int, int> > west_start(0);
+    vector<pair<int, int> > other_start(0);
+
+    for (int i = 1; i < eastUp; ++i) {
+        vector<pair<int, int>> this_point = area_dist[i];
+        for (int j = 0; j < this_point.size(); ++j) {
+            int car_id = this_point[j].first;
+            int dis = carDict[car_id].carTo - carDict[car_id].carFrom;
+            east_start.push_back(make_pair(car_id, dis));
+        }
+    }
+    sort(east_start.begin(),east_start.end(),[=](pair<int,int>&a, pair<int,int>&b){return a.second > b.second;});
+    cout << east_start.size() << endl;
+    cout << westBegin << ", " <<  crossList.size() << endl;
+    for (int i = westBegin; i <= crossList.size(); ++i) {
+        vector<pair<int, int>> this_point = area_dist[i];
+        for (int j = 0; j < this_point.size(); ++j) {
+            int car_id = this_point[j].first;
+            int dis = carDict[car_id].carTo - carDict[car_id].carFrom;
+            west_start.push_back(make_pair(car_id, dis));
+        }
+    }
+    sort(west_start.begin(),west_start.end(),[=](pair<int,int>&a, pair<int,int>&b){return a.second > b.second;});
+    cout << west_start.size() << endl;
+
+    for (int i = eastUp; i < westBegin; ++i) {
+        vector<pair<int, int>> this_point = area_dist[i];
+        for (int j = 0; j < this_point.size(); ++j) {
+            int car_id = this_point[j].first;
+            int dis = carDict[car_id].carTo - carDict[car_id].carFrom;
+            other_start.push_back(make_pair(car_id, dis));
+        }
+    }
+    sort(other_start.begin(),other_start.end(),[=](pair<int,int>&a, pair<int,int>&b){return a.second > b.second;});
+    cout << other_start.size() << endl;
+    while (!east_start.empty() || !west_start.empty())
+    {
+        if(!east_start.empty())
+        {
+            order.push_back(east_start[0].first);
+            east_start.erase(east_start.begin());
+        }
+        if(!west_start.empty())
+        {
+            order.push_back(west_start[0].first);
+            west_start.erase(west_start.begin());
+        }
+    }
+    while (!other_start.empty() )
+    {
+        order.push_back(other_start[0].first);
+        other_start.erase(other_start.begin());
+    }
+
+    assert(order.size() == carDict.size());
+    return ;
+#endif
 }
 
 /**
@@ -117,9 +251,10 @@ Graph trafficManager::get_new_map() {
             topo ends = (*item);
             int road_end = ends.end;
             string road_name = to_string(road_begin) + "_" + to_string(road_end);
-            double road_weight = roadDict[road_name].get_road_weight(1.0);
+            double road_weight = roadDict[road_name].get_road_weight(DIST_PERCENT);
             // 注意是整形的
             (*item).weight = (*item).length * (1.0 + road_weight * ROAD_WEIGHTS_CALC);
+//            (*item).weight = roadDict[road_name].roadLength * roadDict[road_name].roadChannel *1.0 / roadDict[road_name].roadSpeedLimit * (1.0 + road_weight * ROAD_WEIGHTS_CALC);
         }
     }
     Graph graph = create_graph(topology, crossList);
@@ -206,8 +341,9 @@ void trafficManager::inference() {
                 // 更新 有向图 权重
                 graph = get_new_map();
                 // 更新 路上车辆 路线
-                for (int car_id : carOnRoadList)
-                {
+                // 一半换策略
+                for (int i = 0; i < carOnRoadList.size(); i += 2) {
+                    int car_id = carOnRoadList[i];
                     Car car_o = carDict[car_id];
                     car_o.update_new_strategy(graph);
                 }
@@ -226,11 +362,21 @@ void trafficManager::inference() {
         // TODO: 动态上路数目
         if(lenOnRoad < CARS_ON_ROAD)
         {
-            size_t how_many = min(CARS_ON_ROAD - lenOnRoad, lenAtHome);
+            size_t how_many = 0;
+            // 所谓半动态
+            if (lenAtHome < CARS_ON_ROAD) {
+                how_many = min(lenAtHome, size_t(CARS_ON_ROAD / 2));
+            } else {
+                how_many = min(CARS_ON_ROAD - lenOnRoad, lenAtHome);
+            }
+//            how_many =  min(CARS_ON_ROAD - lenOnRoad, lenAtHome);
 
             int count_start = 0;
+            vector<int> carordered(carAtHomeList.begin(), carAtHomeList.begin() + how_many);
+            sort(carordered.begin(), carordered.end());  //小号优先
+
             for (unsigned int i = 0; i < how_many; ++i) {
-                int car_id = carAtHomeList[i];
+                int car_id = carordered[i];
                 Car &car_obj = carDict[car_id];
                 string road_name = car_obj.try_start(graph, TIME);
                 if(road_name != NO_ANSWER)

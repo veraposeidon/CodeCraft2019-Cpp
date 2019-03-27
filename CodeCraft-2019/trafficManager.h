@@ -9,7 +9,7 @@
 
 // 场上车辆数目
 //CARS_ON_ROAD = 2500  // 大地图2500辆
-#define CARS_ON_ROAD  (1100)    // 大地图2200  // 小地图1200辆
+#define CARS_ON_ROAD  (1200)    // 大地图2200  // 小地图1200辆
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
@@ -21,10 +21,24 @@
 #define LOOPS_TO_DEAD_CLOCK (100)
 
 // 路口占比权重
-#define ROAD_WEIGHTS_CALC (3.0)
+#define ROAD_WEIGHTS_CALC (5.0)
 
 // 单时间片一个路口循环次数
 #define CROSS_LOOP_TIMES (1)
+
+// 随机种子
+#define RANDOM_SEED (42)
+
+// 分布系数在拥堵中占的比重
+#define DIST_PERCENT (1.0)
+
+
+
+// 上路方式
+//#define START_RANDOM    // 随机上路
+//#define START_BY_TIME // 按照预计时间上路
+#define START_BY_TIME_AND_PLACE // 按照预计时间和区位分布上路
+//#define START_BY_DIRECTION // 按照预计时间和区位分布上路
 
 
 #include "dijsktra.h"
