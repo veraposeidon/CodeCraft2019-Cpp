@@ -101,10 +101,24 @@ int main(int argc, char *argv[]) {
     cross_dict.clear();
 
 
-    // 5. 调度中心
-    trafficManager manager = trafficManager(topologyDict, crosses, cars, roads);
-    // 5.1 推演
-    manager.inference();
+    // 5. 调度中心 参数集合
+    vector<int> para_car_on_road = CARS_ON_ROAD;
+
+    trafficManager manager = trafficManager(topologyDict, crosses, cars, roads, para_car_on_road[0]);;
+    for (int cars_on_road : para_car_on_road) {
+        // 调度中心
+        // 一次换一组参数
+        manager = trafficManager(topologyDict, crosses, cars, roads, cars_on_road);
+
+        // 推演并判断结果，不行换下一组参数
+        bool success = manager.inference();
+        if (success) {
+            break;  // 完成任务结束
+        } else {
+            continue; // 不完成任务则进行下一轮
+        }
+    }
+
 
     // 5.2 拉取结果
     // unordered_map<int, schedule_result>();

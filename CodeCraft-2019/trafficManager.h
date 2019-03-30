@@ -9,7 +9,8 @@
 
 // 场上车辆数目
 //CARS_ON_ROAD = 2500  // 大地图2500辆
-#define CARS_ON_ROAD  (2700)    // 大地图2000  // 小地图1200辆
+//#define CARS_ON_ROAD  (6000)    // 大地图2000  // 小地图1200辆
+#define CARS_ON_ROAD  {6000, 3000}    // 换成列表，这样更方便调参数了
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
@@ -69,6 +70,7 @@ public:
     Graph graph;    // 图模型
     int TIME;   // 调度系统时间
     int TIME_STEP;    // 调度系统时间单位
+    size_t how_many_cars_on_road;
 
     unordered_map<int, schedule_result> result; // 调度结果
     vector<int> launch_order;   // 车辆启动顺序
@@ -76,7 +78,7 @@ public:
 
     // 构造函数
     trafficManager(topology_type &topo, unordered_map<int, Cross> &cross_dict, unordered_map<int, Car> &car_dict,
-                   unordered_map<string, Road> &road_dict);
+                   unordered_map<string, Road> &road_dict, size_t on_road_cars);
 
     // 初始化上路顺序
     void get_start_list(vector<int> &order);
@@ -97,7 +99,7 @@ public:
     unordered_map<int, schedule_result> get_result();
 
     // 推演
-    void inference();
+    bool inference();
 };
 
 

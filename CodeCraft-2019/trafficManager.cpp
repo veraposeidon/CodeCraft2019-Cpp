@@ -16,11 +16,13 @@
  * @param road_dict
  */
 trafficManager::trafficManager(topology_type &topo, unordered_map<int, Cross> &cross_dict,
-                               unordered_map<int, Car> &car_dict, unordered_map<string, Road> &road_dict) {
+                               unordered_map<int, Car> &car_dict, unordered_map<string, Road> &road_dict,
+                               size_t on_road_cars) {
     topology = topo;
     crossDict = cross_dict;
     carDict = car_dict;
     roadDict = road_dict;
+    how_many_cars_on_road = on_road_cars;
 
     TIME = 0;
     TIME_STEP = 1;
@@ -280,7 +282,7 @@ unordered_map<int, schedule_result> trafficManager::get_result() {
 /**
  * 推演
  */
-void trafficManager::inference() {
+bool trafficManager::inference() {
     // 初始化时间
     TIME = 0;
     // 初始化有向图
@@ -328,8 +330,11 @@ void trafficManager::inference() {
 
             if (cross_loop_alert > LOOPS_TO_DEAD_CLOCK)
             {
-                cout << "路口循环调度次数太多进行警告" << endl;
-                assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
+                cout << "路口循环调度次数太多进行警告***********************************************" << endl;
+                cout << "路口循环调度次数太多进行警告***********************************************" << endl;
+                cout << "路口循环调度次数太多进行警告***********************************************" << endl;
+//                assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
+                return false;
             }
 
             if(cross_loop_alert >= LOOPS_TO_UPDATE)
@@ -360,14 +365,14 @@ void trafficManager::inference() {
 
         // TODO: 动态更改地图车辆容量
         // TODO: 动态上路数目
-        if(lenOnRoad < CARS_ON_ROAD)
+        if (lenOnRoad < how_many_cars_on_road)
         {
             size_t how_many = 0;
             // 所谓半动态
-            if (lenAtHome < CARS_ON_ROAD) {
-                how_many = min(lenAtHome, size_t(CARS_ON_ROAD / 4));
+            if (lenAtHome < how_many_cars_on_road) {
+                how_many = min(lenAtHome, size_t(how_many_cars_on_road / 4));
             } else {
-                how_many = min(CARS_ON_ROAD - lenOnRoad, lenAtHome);
+                how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
             }
 //            how_many =  min(CARS_ON_ROAD - lenOnRoad, lenAtHome);
 
@@ -395,6 +400,7 @@ void trafficManager::inference() {
         }
     }
     cout << "Tasks Completed! and Schedule Time is: " + to_string(TIME) << endl;
+    return true;
 }
 
 

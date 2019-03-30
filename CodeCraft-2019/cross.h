@@ -85,7 +85,7 @@ public:
     // 跨路口移动车辆
     void move_car_across(Car &car_obj, Road &this_road, Road &next_road, unordered_map<int, Car> &car_dict);
 
-    // 调度路口多次
+    // 调度路口
     void update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross);
 };
 
