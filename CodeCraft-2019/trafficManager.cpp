@@ -378,7 +378,7 @@ bool trafficManager::inference() {
             // 所谓半动态
             how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
 //            if (lenAtHome < how_many_cars_on_road) {
-//                how_many = min(lenAtHome, size_t(how_many_cars_on_road / 4));
+//                how_many = min(lenAtHome, size_t(how_many_cars_on_road / 10));
 //            } else {
 //                how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
 //            }
