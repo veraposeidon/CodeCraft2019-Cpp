@@ -47,6 +47,7 @@ public:
     vector<int> roads_prior_id; // 道路调度优先级 id表示
     vector<string> roads_prior_name;    //  道路调度优先级 name表示
     bool nothing2do;    // 时间片内路口调度结束
+    int call_times;     // 时间片内调用处次数，表达该路口拥挤程度
 
     // 默认构造函数
     Cross();

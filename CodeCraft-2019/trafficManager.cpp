@@ -31,8 +31,7 @@ trafficManager::trafficManager(topology_type &topo, unordered_map<int, Cross> &c
 
 
     crossList = vector<int>(0);
-    for (auto &cross : crossDict)
-    {
+    for (auto &cross : crossDict) {
         int cross_id = cross.first;
         crossList.push_back(cross_id);
     }
@@ -227,6 +226,7 @@ int trafficManager::update_cars(vector<int> &carAtHomeList, vector<int> &carOnRo
     }
     return carSucceedNum;
 }
+
 /**
  * 是否所有车辆演算结束
  * @return
@@ -234,7 +234,7 @@ int trafficManager::update_cars(vector<int> &carAtHomeList, vector<int> &carOnRo
 bool trafficManager::is_task_completed() {
     for (unordered_map<int, Car>::const_iterator item = carDict.begin(); item != carDict.end(); item++) {
         int car_id = (*item).first;
-        if (! carDict[car_id].is_ended())
+        if (!carDict[car_id].is_ended())
             return false;
     }
     return true;
@@ -246,6 +246,7 @@ bool trafficManager::is_task_completed() {
  * @return
  */
 Graph trafficManager::get_new_map() {
+    // 1. 根据道路和路口更新权重
     for (auto &start : topology) {
         int road_begin = start.first;
         for (auto item = topology[road_begin].begin(); item != topology[road_begin].end(); item++) {
@@ -253,11 +254,20 @@ Graph trafficManager::get_new_map() {
             int road_end = ends.end;
             string road_name = to_string(road_begin) + "_" + to_string(road_end);
             double road_weight = roadDict[road_name].get_road_weight(DIST_PERCENT);
-            // 注意是整形的
+
+            // 道路权重附加
             (*item).weight = (*item).length * (1.0 + road_weight * ROAD_WEIGHTS_CALC);
 //            (*item).weight = roadDict[road_name].roadLength * roadDict[road_name].roadChannel *1.0 / roadDict[road_name].roadSpeedLimit * (1.0 + road_weight * ROAD_WEIGHTS_CALC);
+
+            // 路口权重附加路口权重只在加在了通往该路口的边
+            // 从该路口出发的边没有加上
+            int cross_end_call = crossDict[road_end].call_times;
+            int cross_start_call = crossDict[road_begin].call_times;
+            int cross_call = max(cross_start_call, cross_end_call);
+            (*item).weight = (*item).weight * (1.0 + cross_call * 1.0 / CROSS_BASE);
         }
     }
+
     Graph graph = create_graph(topology, crossList);
     return graph;
 }
@@ -267,8 +277,7 @@ Graph trafficManager::get_new_map() {
  * @return
  */
 unordered_map<int, schedule_result> trafficManager::get_result() {
-    for (unordered_map<int, Car>::const_iterator car_item = carDict.begin(); car_item != carDict.end(); car_item++)
-    {
+    for (unordered_map<int, Car>::const_iterator car_item = carDict.begin(); car_item != carDict.end(); car_item++) {
         int car_id = (*car_item).first;
         Car car_obj = carDict[car_id];
         schedule_result singleResult(car_obj.startTime, car_obj.passed_by);
@@ -287,11 +296,10 @@ bool trafficManager::inference() {
     // 初始化有向图
     graph = get_new_map();
     // 初始化列表
-    vector<int> carAtHomeList(0),carOnRoadList(0);
+    vector<int> carAtHomeList(0), carOnRoadList(0);
     update_cars(carAtHomeList, carOnRoadList);
     // 进入调度任务，直至完成
-    while(!is_task_completed())
-    {
+    while (!is_task_completed()) {
         // 1. 更新时间片
         TIME += TIME_STEP;
 
@@ -304,22 +312,18 @@ bool trafficManager::inference() {
 
         // 3. 更新所有路口
         // 重置路口标记
-        for(int cross_id : crossList)
-        {
+        for (int cross_id : crossList) {
             Cross &cross = crossDict[cross_id];
             cross.reset_end_flag();
         }
 
         // 这个While 是刚需，必须要完成道路所有车辆的调度才能进行下一个时间片
         int cross_loop_alert = 0;
-        while (any_car_waiting(carOnRoadList))
-        {
+        while (any_car_waiting(carOnRoadList)) {
             // 调度一轮所有路口
-            for(int cross_id : crossList)
-            {
+            for (int cross_id : crossList) {
                 Cross &cross = crossDict[cross_id];
-                if (!cross.if_cross_ended())
-                {
+                if (!cross.if_cross_ended()) {
                     cross.update_cross(roadDict, carDict, CROSS_LOOP_TIMES);    // 更新路口
                 }
             }
@@ -327,40 +331,33 @@ bool trafficManager::inference() {
 
             cross_loop_alert += 1;
 
-            if (cross_loop_alert > LOOPS_TO_DEAD_CLOCK)
-            {
-                cout << "路口循环调度次数太多进行警告***********************************************" << endl;
-                cout << "路口循环调度次数太多进行警告***********************************************" << endl;
-                cout << "路口循环调度次数太多进行警告***********************************************" << endl;
+            if (cross_loop_alert > LOOPS_TO_DEAD_CLOCK) {
                 cout
                         << "路口循环调度次数太多进行警告从头来过*******************************************************警告线**************************************"
                         << endl;
                 cout
                         << "路口循环调度次数太多进行警告从头来过*******************************************************警告线**************************************"
                         << endl;
-                cout
-                        << "路口循环调度次数太多进行警告从头来过*******************************************************警告线**************************************"
-                        << endl;
-                cout
-                        << "路口循环调度次数太多进行警告从头来过*******************************************************警告线**************************************"
-                        << endl;
-//                assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
+
+                // 找到堵死的路口
+                find_dead_clock();
+
+                // assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
                 return false;
             }
 
-            if(cross_loop_alert >= LOOPS_TO_UPDATE)
-            {
+            if (cross_loop_alert >= LOOPS_TO_UPDATE) {
                 // TODO: 怂恿堵着的车辆换路线
                 // TODO: 高速路开高速车
                 // TODO: 定时更新策略
 
                 // 更新 有向图 权重
                 graph = get_new_map();
+
                 // 更新 路上车辆 路线
-                // 一半换策略
-                for (size_t i = 0; i < carOnRoadList.size(); i += 3) {
+                for (size_t i = 0; i < carOnRoadList.size(); i += UPDATE_FREQUENCE) {
                     int car_id = carOnRoadList[i];
-                    Car car_o = carDict[car_id];
+                    Car &car_o = carDict[car_id];
                     car_o.update_new_strategy(graph);
                 }
             }
@@ -376,15 +373,15 @@ bool trafficManager::inference() {
 
         // TODO: 动态更改地图车辆容量
         // TODO: 动态上路数目
-        if (lenOnRoad < how_many_cars_on_road)
-        {
+        if (lenOnRoad < how_many_cars_on_road) {
             size_t how_many = 0;
             // 所谓半动态
-            if (lenAtHome < how_many_cars_on_road) {
-                how_many = min(lenAtHome, size_t(how_many_cars_on_road / 4));
-            } else {
-                how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
-            }
+            how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
+//            if (lenAtHome < how_many_cars_on_road) {
+//                how_many = min(lenAtHome, size_t(how_many_cars_on_road / 4));
+//            } else {
+//                how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
+//            }
 //            how_many =  min(CARS_ON_ROAD - lenOnRoad, lenAtHome);
 
             int count_start = 0;
@@ -394,11 +391,16 @@ bool trafficManager::inference() {
             for (unsigned int i = 0; i < how_many; ++i) {
                 int car_id = carordered[i];
                 Car &car_obj = carDict[car_id];
+
+                // 判断道路挤不挤，挤就不上路
+                if (crossDict[car_obj.carFrom].call_times > 10) {
+                    continue;
+                }
+
                 string road_name = car_obj.try_start(graph, TIME);
-                if(road_name != NO_ANSWER)
-                {
+                if (road_name != NO_ANSWER) {
                     Road &road_obj = roadDict[road_name];
-                    if(road_obj.try_on_road(car_obj))   // 尝试上路
+                    if (road_obj.try_on_road(car_obj))   // 尝试上路
                     {
                         count_start += 1;
                         carOnRoadList.push_back(car_obj.carID);
@@ -407,7 +409,8 @@ bool trafficManager::inference() {
                     }
                 }
             }
-            cout << to_string(count_start) + "," + to_string(lenAtHome) + ","+ to_string(lenOnRoad) + ","+ to_string(carsOnEnd) << endl;
+            cout << to_string(count_start) + "," + to_string(lenAtHome) + "," + to_string(lenOnRoad) + "," +
+                    to_string(carsOnEnd) << endl;
         }
     }
     cout << "Tasks Completed! " << endl;
@@ -424,6 +427,21 @@ int trafficManager::total_schedule_time() {
         total += time;
     }
     return total;
+}
+
+void trafficManager::find_dead_clock() {
+    int max_calltimes = 0;
+    int max_cross_id = 0;
+    for (auto &cross : crossDict) {
+        int cross_id = cross.first;
+        int calltimes = crossDict[cross_id].call_times;
+
+        if (calltimes >= max_calltimes) {
+            max_cross_id = cross_id;
+        }
+    }
+
+    cout << "Dead Clock: " << max_cross_id << endl;
 }
 
 

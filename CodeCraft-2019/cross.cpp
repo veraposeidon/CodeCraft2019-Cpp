@@ -13,13 +13,14 @@ Cross::Cross() {
     roads_prior_id = vector<int>(0);
     roads_prior_name = vector<string>(0);
     nothing2do = false;
+    call_times = -1;
 }
 
 Cross::Cross(int cross_id, int road1, int road2, int road3, int road4, unordered_map<string, Road> &road_dict) {
     crossID = cross_id;
     roads = vector<int>{road1, road2, road3, road4};
     roads_prior_id = get_road_priors(); // 获取除-1外的道路ID优先级
-
+    call_times = 0;
     // 根据道路ID获取Name
     roads_prior_name = vector<string>(0);
     for (int i : roads_prior_id) {
@@ -63,6 +64,7 @@ string Cross::find_road_name_to_cross(unordered_map<string, Road> &road_dict, in
  */
 void Cross::reset_end_flag() {
     nothing2do = false;
+    call_times = call_times / 2;
 }
 
 /*/
@@ -163,7 +165,7 @@ bool Cross::get_road_first_order_info(string road_name, unordered_map<string, Ro
 
                 for (size_t i = 0; i < roads.size(); ++i) {
                     if (roads[i] == road_now_id) {
-                        int nexid = (i + 2) % 4;
+                        size_t nexid = (i + 2) % 4;
                         road_next_id2 = roads[nexid];
                         break;
                     }
@@ -342,6 +344,9 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
             nothing2do = true;
             return;
         }
+
+        // 更新路口调用次数
+        call_times += 1;
 
         // 路口调度信息
         vector<int> roadIDs(0);
