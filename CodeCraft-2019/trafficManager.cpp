@@ -104,7 +104,6 @@ void trafficManager::get_start_list(vector<int> &order) {
         }
     }
     assert(order.size() == carDict.size());
-    return;
 #endif
 #ifdef START_BY_DIRECTION   // 先东西相向而行 // 再跑其他车辆
     int eastUp = 20;
@@ -333,6 +332,18 @@ bool trafficManager::inference() {
                 cout << "路口循环调度次数太多进行警告***********************************************" << endl;
                 cout << "路口循环调度次数太多进行警告***********************************************" << endl;
                 cout << "路口循环调度次数太多进行警告***********************************************" << endl;
+                cout
+                        << "路口循环调度次数太多进行警告从头来过*******************************************************警告线**************************************"
+                        << endl;
+                cout
+                        << "路口循环调度次数太多进行警告从头来过*******************************************************警告线**************************************"
+                        << endl;
+                cout
+                        << "路口循环调度次数太多进行警告从头来过*******************************************************警告线**************************************"
+                        << endl;
+                cout
+                        << "路口循环调度次数太多进行警告从头来过*******************************************************警告线**************************************"
+                        << endl;
 //                assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
                 return false;
             }
@@ -399,8 +410,20 @@ bool trafficManager::inference() {
             cout << to_string(count_start) + "," + to_string(lenAtHome) + ","+ to_string(lenOnRoad) + ","+ to_string(carsOnEnd) << endl;
         }
     }
-    cout << "Tasks Completed! and Schedule Time is: " + to_string(TIME) << endl;
+    cout << "Tasks Completed! " << endl;
+    cout << "system schedule time is: " + to_string(TIME) << endl;
+    cout << "all cars total schedule time: " + to_string(total_schedule_time()) << endl;
     return true;
+}
+
+int trafficManager::total_schedule_time() {
+    int total = 0;
+    for (auto &car : carDict) {
+        int car_id = car.first;
+        int time = carDict[car_id].startTime - carDict[car_id].carPlanTime;
+        total += time;
+    }
+    return total;
 }
 
 

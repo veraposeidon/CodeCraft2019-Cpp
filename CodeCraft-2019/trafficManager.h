@@ -11,6 +11,7 @@
 //CARS_ON_ROAD = 2500  // 大地图2500辆
 //#define CARS_ON_ROAD  (6000)    // 大地图2000  // 小地图1200辆
 #define CARS_ON_ROAD  {6000, 3000}    // 换成列表，这样更方便调参数了
+//#define CARS_ON_ROAD  {6000}    // 换成列表，可以动态改参数，最大化成果
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
@@ -22,7 +23,7 @@
 #define LOOPS_TO_DEAD_CLOCK (30)
 
 // 路口占比权重
-#define ROAD_WEIGHTS_CALC (3.0)
+#define ROAD_WEIGHTS_CALC (3)
 
 // 单时间片一个路口循环次数
 #define CROSS_LOOP_TIMES (1)
@@ -100,6 +101,9 @@ public:
 
     // 推演
     bool inference();
+
+    // 所有车辆总调度时间
+    int total_schedule_time();
 };
 
 

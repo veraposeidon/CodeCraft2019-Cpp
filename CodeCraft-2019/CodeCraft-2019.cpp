@@ -148,11 +148,10 @@ int main(int argc, char *argv[]) {
     answerFile.close();
 
 
-    //程序结束用时
+    // 程序结束用时
     end = clock();
     double end_time = (double) (end - start) / CLOCKS_PER_SEC;
-
-    cout << "Total time:" << end_time << endl;
+    cout << "program run time:" << end_time << endl;
 
 
     return 0;
