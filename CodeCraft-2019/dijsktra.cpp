@@ -204,7 +204,7 @@ void Graph::addEdge(int u, int v, double wt) {
 }
 
 /**
- * 大恩大德
+ * 更快时间复杂度的实现
  * binary_heap 最短路径搜索
  * http://alrightchiu.github.io/SecondRound/single-source-shortest-pathdijkstras-algorithm.html
  * https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-using-priority_queue-stl/

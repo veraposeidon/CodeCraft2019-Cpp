@@ -9,7 +9,7 @@
 
 // 场上车辆数目
 //CARS_ON_ROAD = 2500  // 大地图2500辆
-#define CARS_ON_ROAD  (1200)    // 大地图2200  // 小地图1200辆
+#define CARS_ON_ROAD  (2200)    // 大地图2000  // 小地图1200辆
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
@@ -18,10 +18,10 @@
 #define LOOPS_TO_UPDATE (3)
 
 // 路口调度多少次直接判为死锁
-#define LOOPS_TO_DEAD_CLOCK (100)
+#define LOOPS_TO_DEAD_CLOCK (30)
 
 // 路口占比权重
-#define ROAD_WEIGHTS_CALC (5.0)
+#define ROAD_WEIGHTS_CALC (3.0)
 
 // 单时间片一个路口循环次数
 #define CROSS_LOOP_TIMES (1)
@@ -30,7 +30,7 @@
 #define RANDOM_SEED (42)
 
 // 分布系数在拥堵中占的比重
-#define DIST_PERCENT (1.0)
+#define DIST_PERCENT (0.5)
 
 
 

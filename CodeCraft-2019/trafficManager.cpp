@@ -329,7 +329,7 @@ void trafficManager::inference() {
             if (cross_loop_alert > LOOPS_TO_DEAD_CLOCK)
             {
                 cout << "路口循环调度次数太多进行警告" << endl;
-                assert(false);
+                assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
             }
 
             if(cross_loop_alert >= LOOPS_TO_UPDATE)
@@ -342,7 +342,7 @@ void trafficManager::inference() {
                 graph = get_new_map();
                 // 更新 路上车辆 路线
                 // 一半换策略
-                for (int i = 0; i < carOnRoadList.size(); i += 2) {
+                for (size_t i = 0; i < carOnRoadList.size(); i += 3) {
                     int car_id = carOnRoadList[i];
                     Car car_o = carDict[car_id];
                     car_o.update_new_strategy(graph);
@@ -365,7 +365,7 @@ void trafficManager::inference() {
             size_t how_many = 0;
             // 所谓半动态
             if (lenAtHome < CARS_ON_ROAD) {
-                how_many = min(lenAtHome, size_t(CARS_ON_ROAD / 2));
+                how_many = min(lenAtHome, size_t(CARS_ON_ROAD / 4));
             } else {
                 how_many = min(CARS_ON_ROAD - lenOnRoad, lenAtHome);
             }

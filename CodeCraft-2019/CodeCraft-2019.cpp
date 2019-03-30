@@ -103,8 +103,10 @@ int main(int argc, char *argv[]) {
 
     // 5. 调度中心
     trafficManager manager = trafficManager(topologyDict, crosses, cars, roads);
+    // 5.1 推演
     manager.inference();
 
+    // 5.2 拉取结果
     // unordered_map<int, schedule_result>();
     auto result = manager.get_result();
 
