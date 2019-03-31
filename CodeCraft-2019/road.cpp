@@ -312,7 +312,7 @@ bool Road::last_row_are_waiting(unordered_map<int, Car> &car_dict) {
  * 移动车辆回家
  * @param car_obj
  */
-void Road::move_car_home(Car &car_obj) {
+void Road::move_car_home(Car &car_obj, int time) {
     assert(car_obj.is_car_way_home());  //断言
     int car_id = car_obj.carID;
     int car_channel = car_obj.carGPS.channel;
@@ -320,7 +320,7 @@ void Road::move_car_home(Car &car_obj) {
     assert(roadStatus[car_channel][car_pos] == car_id); //直接断言 车辆所处位置正确
 
     roadStatus[car_channel][car_pos] = -1;  //将车辆所在位置置空
-    car_obj.change2success();   // 更改车辆状态
+    car_obj.change2success(time);   // 更改车辆状态
 }
 
 /**

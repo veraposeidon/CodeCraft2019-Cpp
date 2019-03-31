@@ -335,7 +335,7 @@ void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unor
  * @param loops_every_cross
  */
 void
-Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross) {
+Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross, int time) {
     for (int i = 0; i < loops_every_cross; i++) {
         // 获取待调度道路和车辆信息
         unordered_map<int, order_info> next_roads = get_first_order_info(road_dict, car_dict);
@@ -385,7 +385,7 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
                 if (next_roads[roadID].next_road_name == "HOME") {
                     Car &car_o = car_dict[next_roads[roadID].car_id];
                     Road &this_road = road_dict[next_roads[roadID].road_name];
-                    this_road.move_car_home(car_o);
+                    this_road.move_car_home(car_o, time);
                     // 更新车道后方信息
                     this_road.update_channel(car_o.carGPS.channel, car_dict);
                     // 除去道路第一优先序车辆记录

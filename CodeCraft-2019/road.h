@@ -55,7 +55,7 @@ public:
     bool last_row_are_waiting(unordered_map<int, Car> &car_dict);
 
     // 移动车辆回家
-    void move_car_home(Car &car_obj);
+    void move_car_home(Car &car_obj, int time);
 
     // 获取道路拥堵权重
     double get_road_weight(double dist_k);

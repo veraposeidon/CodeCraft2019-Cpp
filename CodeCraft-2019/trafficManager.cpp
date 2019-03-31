@@ -38,6 +38,7 @@ trafficManager::trafficManager(topology_type &topo, unordered_map<int, Cross> &c
     sort(crossList.begin(), crossList.end());   // 升序排布
     get_start_list(launch_order);
     graph = Graph(crossList);
+
 }
 
 /**
@@ -204,6 +205,7 @@ bool trafficManager::any_car_waiting(vector<int> &carOnRoadList) {
  * @param carAtHomeList
  * @param carOnRoadList
  * @return 时间片内入库的车数
+ * 还有一个任务是统计所有车辆总调度时间，即车辆到达时间-预计出发时间
  */
 int trafficManager::update_cars(vector<int> &carAtHomeList, vector<int> &carOnRoadList) {
     int carSucceedNum = 0;
@@ -221,6 +223,7 @@ int trafficManager::update_cars(vector<int> &carAtHomeList, vector<int> &carOnRo
             ++iter;
         } else if (car_obj.is_ended()) {
             carSucceedNum += 1;
+
             iter = launch_order.erase(iter);    // 发车列表中去除这个ID
         }
     }
@@ -324,7 +327,7 @@ bool trafficManager::inference() {
             for (int cross_id : crossList) {
                 Cross &cross = crossDict[cross_id];
                 if (!cross.if_cross_ended()) {
-                    cross.update_cross(roadDict, carDict, CROSS_LOOP_TIMES);    // 更新路口
+                    cross.update_cross(roadDict, carDict, CROSS_LOOP_TIMES, TIME);    // 更新路口
                 }
             }
 
@@ -377,8 +380,9 @@ bool trafficManager::inference() {
             size_t how_many = 0;
             // 所谓半动态
             how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
+
 //            if (lenAtHome < how_many_cars_on_road) {
-//                how_many = min(lenAtHome, size_t(how_many_cars_on_road / 10));
+//                how_many = min(lenAtHome, size_t(how_many_cars_on_road / 4));
 //            } else {
 //                how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
 //            }
@@ -423,11 +427,13 @@ int trafficManager::total_schedule_time() {
     int total = 0;
     for (auto &car : carDict) {
         int car_id = car.first;
-        int time = carDict[car_id].startTime - carDict[car_id].carPlanTime;
+        int time = carDict[car_id].arriveTime - carDict[car_id].carPlanTime;
         total += time;
     }
     return total;
 }
+
+
 
 void trafficManager::find_dead_clock() {
     int max_calltimes = 0;

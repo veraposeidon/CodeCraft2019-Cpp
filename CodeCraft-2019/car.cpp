@@ -15,6 +15,7 @@ Car::Car() {
     carPlanTime = -1;
     carStatus = WAITING_HOME;
     startTime = -1;
+    arriveTime = -1;
 
     // 初始化GPS
     carGPS = GPS();
@@ -32,6 +33,7 @@ Car::Car(int car_id, int origin, int destination, int speed, int plan_time) {
     carPlanTime = plan_time;
     carStatus = WAITING_HOME;
     startTime = 0;
+    arriveTime = -1;
 
     // 初始化GPS
     carGPS = GPS();
@@ -112,13 +114,15 @@ void Car::change2waiting() {
  */
 void Car::change2end() {
     carStatus = ON_ROAD_STATE_END;
+
 }
 
 /***
  * 更改状态为到达终点
  */
-void Car::change2success() {
+void Car::change2success(int time) {
     carStatus = SUCCEED;
+    arriveTime = time;
 }
 
 /***

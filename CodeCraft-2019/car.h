@@ -58,6 +58,7 @@ public:
     int carPlanTime;        // 预计发车时间
     CarStatus carStatus;    // 车辆状态
     int startTime;          // 实际发车车间
+    int arriveTime;          // 实际发车车间
     GPS carGPS;        // 定位
     vector<int> strategy;   // 规划路径
     vector<int> passed_by;  // 记录路过的路段，该结果为最终结果
@@ -83,7 +84,7 @@ public:
     void change2end();
 
     // 更改状态为到达终点
-    void change2success();
+    void change2success(int time);
 
     // 更改状态为出路口等待调度
     void change2waiting_out();
