@@ -125,7 +125,8 @@ void Graph::update_weight(const int from_node, const int to_node, const double w
 ///    致谢： http://benalexkeen.com/implementing-djikstras-shortest-path-algorithm-with-python/
 vector<int> Graph::short_path_finding(const int from_node, const int to_node) {
 
-    return shortestPath_binary(from_node,to_node);
+    return shortestPath_binary(from_node,to_node);  // 更快的实现方式
+
     // 屏蔽上面那句然后进行正常的dijsktra
     // shortest_paths是字典，索引为节点，值为tuple(上一个节点，权重)
     unordered_map<int, pair<int, double> > shortest_paths = {{from_node, make_pair(SEARCH_END, 0.0)}};
@@ -257,14 +258,16 @@ vector<int> Graph::shortestPath_binary(int src, int target) {
         }
     }
 
-    // 置换成真实顶点
+    // 映射真实顶点
     int index = target_index;
     while (-1 != index)
     {
         result.push_back(cross_list[index]);
         index = pred[index];
     }
+    // 顺序倒置
     reverse(result.begin(), result.end());
+
     return result;
 }
 

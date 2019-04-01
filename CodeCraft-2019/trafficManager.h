@@ -8,10 +8,7 @@
 #define CODECRAFT_2019_TRAFFICMANAGER_H
 
 // 场上车辆数目
-//CARS_ON_ROAD = 2500  // 大地图2500辆
-//#define CARS_ON_ROAD  (6000)    // 大地图2000  // 小地图1200辆
-#define CARS_ON_ROAD  {7000,4000,3100,3000}    // 换成列表，这样更方便调参数了 // 6000 大图数量 3100 小图数量 3000 保命参数
-//#define CARS_ON_ROAD  {4000}    // 换成列表，可以动态改参数，最大化成果
+#define CARS_ON_ROAD  {9000,8500, 8000, 5000, 3000, 2000}    // 大参数跑成绩，小参数保命
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
@@ -23,7 +20,7 @@
 #define LOOPS_TO_DEAD_CLOCK (50)
 
 // 路口占比权重
-#define ROAD_WEIGHTS_CALC (3)
+#define ROAD_WEIGHTS_CALC (6)
 
 // 单时间片一个路口循环次数
 #define CROSS_LOOP_TIMES (1)
@@ -35,11 +32,11 @@
 #define DIST_PERCENT (0.5)
 
 // 路口权重调用比例 基数 越小影响越大
-#define CROSS_BASE (20)
+#define CROSS_BASE (15)
 
 // 动态调度 抽样频率
 // 通过降低抽样频率来加快运行速度
-#define UPDATE_FREQUENCE (2)
+#define UPDATE_FREQUENCE (3)
 
 // 上路方式
 //#define START_RANDOM    // 随机上路

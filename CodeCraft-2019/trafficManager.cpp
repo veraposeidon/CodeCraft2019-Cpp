@@ -87,13 +87,30 @@ void trafficManager::get_start_list(vector<int> &order) {
     }
 
     // 对每个出发点的车按时间排序
+    // 统计每个出发点的车数目
+    // 统计权重和历史权重
+    unordered_map<int, pair<double, double>> area_ratio;
+    size_t min_cars = INT_MAX; // 最少的车数出发点
     for (auto &id_time : area_dist) {
         int cross_id = id_time.first;
         sort(area_dist[cross_id].begin(), area_dist[cross_id].end(),
              [=](pair<int, int> &a, pair<int, int> &b) { return a.second < b.second; });
+
+        // 最少数目
+        if(area_dist[cross_id].size() < min_cars){
+            min_cars = area_dist[cross_id].size();
+        }
     }
 
-    // 轮流抽出发点
+    // 统计比例
+    for (auto &id_time : area_dist) {
+        int cross_id = id_time.first;
+        double ratio = area_dist[cross_id].size() * 1.0 / min_cars;
+        area_ratio[cross_id] = make_pair(ratio, 0.0);
+    }
+
+    // 轮流抽出发点   //
+    // 1:1轮流采会导致堆积，应该按照比例进行采样   // 这样不会最后堆在同一个出发点
     while (order.size() < carDict.size()) {
         for (auto &id_time : area_dist) {
             int cross_id = id_time.first;
@@ -101,8 +118,23 @@ void trafficManager::get_start_list(vector<int> &order) {
                 order.push_back(area_dist[cross_id][0].first);
                 area_dist[cross_id].erase(area_dist[cross_id].begin());
             }
+
+            // 减掉一次机会
+            area_ratio[cross_id].second += area_ratio[cross_id].first - 1.0;
+
+            // 如果累计大于一了，那就再添加一辆车
+            if(area_ratio[cross_id].second >= 1.0)
+            {
+                if (!area_dist[cross_id].empty()) {
+                    order.push_back(area_dist[cross_id][0].first);
+                    area_dist[cross_id].erase(area_dist[cross_id].begin());
+                }
+                // 减掉一次机会
+                area_ratio[cross_id].second -= 1.0;
+            }
         }
     }
+
     assert(order.size() == carDict.size());
 #endif
 #ifdef START_BY_DIRECTION   // 先东西相向而行 // 再跑其他车辆
@@ -260,13 +292,12 @@ Graph trafficManager::get_new_map() {
 
             // 道路权重附加
             (*item).weight = (*item).length * (1.0 + road_weight * ROAD_WEIGHTS_CALC);
-//            (*item).weight = roadDict[road_name].roadLength * roadDict[road_name].roadChannel *1.0 / roadDict[road_name].roadSpeedLimit * (1.0 + road_weight * ROAD_WEIGHTS_CALC);
 
-            // 路口权重附加路口权重只在加在了通往该路口的边
-            // 从该路口出发的边没有加上
+            // 路口权重（附加在与路口相连的道路上）
             int cross_end_call = crossDict[road_end].call_times;
             int cross_start_call = crossDict[road_begin].call_times;
-            int cross_call = max(cross_start_call, cross_end_call);
+//            int cross_call = max(cross_start_call, cross_end_call);   // 取较大值
+            int cross_call = cross_start_call + cross_end_call; // 效果相同，但更慢
             (*item).weight = (*item).weight * (1.0 + cross_call * 1.0 / CROSS_BASE);
         }
     }
@@ -353,10 +384,8 @@ bool trafficManager::inference() {
                 // TODO: 怂恿堵着的车辆换路线
                 // TODO: 高速路开高速车
                 // TODO: 定时更新策略
-
                 // 更新 有向图 权重
                 graph = get_new_map();
-
                 // 更新 路上车辆 路线
                 for (size_t i = 0; i < carOnRoadList.size(); i += UPDATE_FREQUENCE) {
                     int car_id = carOnRoadList[i];
@@ -375,19 +404,15 @@ bool trafficManager::inference() {
         size_t lenAtHome = carAtHomeList.size();
 
         // TODO: 动态更改地图车辆容量
-        // TODO: 动态上路数目
         if (lenOnRoad < how_many_cars_on_road) {
+            // 上路数目
             size_t how_many = 0;
-            // 所谓半动态
             how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
-
-//            if (lenAtHome < how_many_cars_on_road) {
-//                how_many = min(lenAtHome, size_t(how_many_cars_on_road / 4));
+//            if (lenAtHome < how_many_cars_on_road / 5) {
+//                how_many = min(lenAtHome, size_t(1000));
 //            } else {
 //                how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
 //            }
-//            how_many =  min(CARS_ON_ROAD - lenOnRoad, lenAtHome);
-
             int count_start = 0;
             vector<int> carordered(carAtHomeList.begin(), carAtHomeList.begin() + how_many);
             sort(carordered.begin(), carordered.end());  //小号优先
