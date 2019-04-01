@@ -3,6 +3,7 @@
 //
 
 #include <algorithm>
+#include <cassert>
 #include "dijsktra.h"
 #include "car.h"
 
@@ -215,6 +216,10 @@ string Car::next_road_name(int cross_id) {
  * @param graph
  */
 void Car::update_new_strategy(Graph &graph) {
+    // 复赛： 预置车辆路线不能更改路线
+    if(carPreset)
+        return;
+
     if (is_car_way_home())    // 回家路上没有用
         return;
 
@@ -234,6 +239,19 @@ void Car::update_new_strategy(Graph &graph) {
         // 换回原有权重
         graph.update_weight(next_cross, this_cross, origin_weight);
     }
+}
+
+/**
+ * 为预置车辆设定路线
+ * @param routes
+ */
+void Car::set_preset_route(int time, vector<int> routes) {
+    // 断言判断本车是属于预置车辆
+    assert(carPreset);
+    // 设定实际出发时间（预计出发时间）
+    carPlanTime = time;
+    // 设定路线 //passedBy就不改了，还是按照运行来。
+    strategy = std::move(routes);
 }
 
 

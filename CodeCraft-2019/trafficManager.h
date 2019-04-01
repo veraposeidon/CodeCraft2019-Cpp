@@ -1,5 +1,3 @@
-#include <utility>
-
 //
 // Created by shen on 2019/3/25.
 //
@@ -8,7 +6,8 @@
 #define CODECRAFT_2019_TRAFFICMANAGER_H
 
 // 场上车辆数目
-#define CARS_ON_ROAD  {9000,8500, 8000, 5000, 3000, 2000}    // 大参数跑成绩，小参数保命
+//#define CARS_ON_ROAD  {9000,8500, 8000, 5000, 3000, 2000}    // 大参数跑成绩，小参数保命
+#define CARS_ON_ROAD  {5000}    // 大参数跑成绩，小参数保命
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)

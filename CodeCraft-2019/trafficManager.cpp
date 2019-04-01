@@ -314,6 +314,10 @@ unordered_map<int, schedule_result> trafficManager::get_result() {
     for (unordered_map<int, Car>::const_iterator car_item = carDict.begin(); car_item != carDict.end(); car_item++) {
         int car_id = (*car_item).first;
         Car car_obj = carDict[car_id];
+        // 复赛：预置车辆跳过，不做统计
+        if (car_obj.carPreset){
+            continue;
+        }
         schedule_result singleResult(car_obj.startTime, car_obj.passed_by);
         result[car_id] = singleResult;
     }

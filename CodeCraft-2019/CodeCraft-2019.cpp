@@ -1,12 +1,13 @@
-#include "iostream"
+#include <iostream>
+#include <ctime>
+#include <sstream>
 #include "utils.h"
 #include "dijsktra.h"
 #include "car.h"
 #include "road.h"
 #include "cross.h"
 #include "trafficManager.h"
-#include<ctime>
-#include <sstream>
+
 
 
 int main(int argc, char *argv[]) {
@@ -91,6 +92,7 @@ int main(int argc, char *argv[]) {
         }
     }
     road_dict.clear();      // 清空。没有清干净
+
     // 4. 生成路口对象
     unordered_map<int, Cross> crosses;
     for (unordered_map<int, unordered_map<string, int>>::const_iterator item = cross_dict.begin();
@@ -107,8 +109,15 @@ int main(int argc, char *argv[]) {
     }
     cross_dict.clear();
 
+    // 5. 拷贝预置车辆信息
+    for(auto &preset_car: preset_car_dict)
+    {
+        int car_id = preset_car.first;
+        cars[car_id].set_preset_route(preset_car.second.real_start_time, preset_car.second.routes);
+    }
 
-    // 5. 调度中心 参数集合
+
+    // 6. 调度中心 参数集合
     vector<int> para_car_on_road = CARS_ON_ROAD;
 
     trafficManager manager = trafficManager(topologyDict, crosses, cars, roads, para_car_on_road[0]);;
@@ -127,7 +136,7 @@ int main(int argc, char *argv[]) {
     }
 
 
-    // 5.2 拉取结果
+    // 7 拉取结果
     // unordered_map<int, schedule_result>();
     auto result = manager.get_result();
 

@@ -118,6 +118,9 @@ public:
     // 更新策略的时候一定要注意不走回头路
     void update_new_strategy(Graph &graph);
 
+    // 复赛：预置车辆设定固定路线
+    void set_preset_route(int time, vector<int> routes);
+
 };
 
 
