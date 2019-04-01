@@ -448,6 +448,10 @@ bool trafficManager::inference() {
     return true;
 }
 
+/**
+ * 所有车辆调度时间
+ * @return
+ */
 int trafficManager::total_schedule_time() {
     int total = 0;
     for (auto &car : carDict) {

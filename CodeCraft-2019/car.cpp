@@ -13,6 +13,8 @@ Car::Car() {
     carTo = -1;
     carSpeed = -1;
     carPlanTime = -1;
+    carPriority = false;
+    carPreset = false;
     carStatus = WAITING_HOME;
     startTime = -1;
     arriveTime = -1;
@@ -25,11 +27,13 @@ Car::Car() {
     passed_by = vector<int>(0);
 }
 
-Car::Car(int car_id, int origin, int destination, int speed, int plan_time) {
+Car::Car(int car_id, int origin, int destination, int speed, int plan_time, bool priority, bool preset) {
     carID = car_id;
     carFrom = origin;
     carTo = destination;
     carSpeed = speed;
+    carPriority = priority;
+    carPreset = preset;
     carPlanTime = plan_time;
     carStatus = WAITING_HOME;
     startTime = 0;

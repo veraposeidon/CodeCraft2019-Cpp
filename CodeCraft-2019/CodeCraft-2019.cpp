@@ -15,25 +15,28 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Begin" << std::endl;
 
-    if (argc < 5) {
-        std::cout << "please input args: carPath, roadPath, crossPath, answerPath" << std::endl;
+    if (argc < 6) {
+        std::cout << "please input args: carPath, roadPath, crossPath, presetAnswerPath, answerPath" << std::endl;
         exit(1);
     }
 
     std::string carPath(argv[1]);
     std::string roadPath(argv[2]);
     std::string crossPath(argv[3]);
-    std::string answerPath(argv[4]);
+    std::string presetAnswerPath(argv[4]);
+    std::string answerPath(argv[5]);
 
     std::cout << "carPath is " << carPath << std::endl;
     std::cout << "roadPath is " << roadPath << std::endl;
     std::cout << "crossPath is " << crossPath << std::endl;
+    std::cout << "presetAnswerPath is " << presetAnswerPath << std::endl;
     std::cout << "answerPath is " << answerPath << std::endl;
 
     // 第一步：读入文件
     auto car_dict = read_car(carPath);
     auto road_dict = read_road(roadPath);
     auto cross_dict = read_cross(crossPath);
+    auto preset_car_dict = read_presetCars(presetAnswerPath);
 
     // 第二步：处理数据
     // 1. 生成拓扑字典
@@ -44,12 +47,16 @@ int main(int argc, char *argv[]) {
     for (unordered_map<int, unordered_map<string, int>>::const_iterator item = car_dict.begin();
          item != car_dict.end(); item++) {
         int carID = (*item).first;
+        bool priority = (car_dict[carID]["priority"] == 1);
+        bool preset = (car_dict[carID]["preset"] == 1);
         Car car_ = Car(
                 car_dict[carID]["id"],
                 car_dict[carID]["from"],
                 car_dict[carID]["to"],
                 car_dict[carID]["speed"],
-                car_dict[carID]["planTime"]
+                car_dict[carID]["planTime"],
+                priority,
+                preset
         );
         cars[carID] = car_;
     }

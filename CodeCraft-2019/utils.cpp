@@ -4,11 +4,6 @@
 
 #include "utils.h"
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-
 
 string strip(const string &str, char ch = ' ') {
     //除去str两端的ch字符
@@ -58,7 +53,7 @@ unordered_map<int, unordered_map<string, int>> read_road(string road_path) {
             data = strip(string(line), '(');
             data = strip(string(data), ')');
 
-            vector<string> datalist = split(data, ", ");
+            vector<string> datalist = split(data, ",");
             unordered_map<string, int> road;
             road["id"] = stoi(datalist[0]);
             road["length"] = stoi(datalist[1]);
@@ -97,7 +92,7 @@ unordered_map<int, unordered_map<string, int>> read_cross(string cross_path) {
             data = strip(string(line), '(');
             data = strip(string(data), ')');
 
-            vector<string> datalist = split(data, ", ");
+            vector<string> datalist = split(data, ",");
             unordered_map<string, int> cross;
             cross["id"] = stoi(datalist[0]);
             cross["road1"] = stoi(datalist[1]);
@@ -134,7 +129,7 @@ unordered_map<int, unordered_map<string, int>> read_car(string car_path) {
             data = strip(string(line), '(');
             data = strip(string(data), ')');
 
-            vector<string> datalist = split(data, ", ");
+            vector<string> datalist = split(data, ",");
 
             unordered_map<string, int> car;
             car["id"] = stoi(datalist[0]);
@@ -142,6 +137,8 @@ unordered_map<int, unordered_map<string, int>> read_car(string car_path) {
             car["to"] = stoi(datalist[2]);
             car["speed"] = stoi(datalist[3]);
             car["planTime"] = stoi(datalist[4]);
+            car["priority"] = stoi(datalist[5]);    // 是否优先
+            car["preset"] = stoi(datalist[6]);      // 是否预置
 
             car_dict[car["id"]] = car;
         }
@@ -149,4 +146,45 @@ unordered_map<int, unordered_map<string, int>> read_car(string car_path) {
     }
 
     return car_dict;
+}
+
+
+/**
+ * 读取预置车辆信息
+ * @param presets_path
+ * @return
+ */
+unordered_map<int, presetCar> read_presetCars(string presets_path) {
+    // 初始化map
+    unordered_map<int, presetCar> presetCars_dict;
+    // 打开文件
+    ifstream presetCar_file(presets_path);
+    string line;
+    if (presetCar_file.is_open()) {
+        while (getline(presetCar_file, line))    // 读取每一行
+        {
+            if (line.rfind('#') == 0)
+                continue;
+
+            // 去除首尾括号
+            string data;
+            data = strip(string(line), '(');
+            data = strip(string(data), ')');
+
+            vector<string> datalist = split(data, ",");
+
+            int car_id = stoi(datalist[0]); // 预置车辆编号
+            int time = stoi(datalist[1]); // 预置车辆出发时间
+            vector<int> routes;     // 预置车辆路径
+            for (size_t i = 2; i < datalist.size(); ++i) {
+                routes.push_back(stoi(datalist[i]));
+            }
+            // 预置车结构体
+            presetCar car = presetCar(car_id, time, routes);
+            // 添加到字典
+            presetCars_dict[car.car_id] = car;
+        }
+        presetCar_file.close();
+    }
+    return presetCars_dict;
 }

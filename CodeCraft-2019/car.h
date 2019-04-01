@@ -56,6 +56,8 @@ public:
     int carTo;              // 车辆终点
     int carSpeed;           // 车辆速度
     int carPlanTime;        // 预计发车时间
+    bool carPriority;       // 是否优先通行权
+    bool carPreset;         // 是否预置出发时间和路线
     CarStatus carStatus;    // 车辆状态
     int startTime;          // 实际发车车间
     int arriveTime;          // 实际发车车间
@@ -66,7 +68,7 @@ public:
     // 构造函数
     Car();
 
-    Car(int car_id, int origin, int destination, int speed, int plan_time);
+    Car(int car_id, int origin, int destination, int speed, int plan_time, bool priority, bool preset);
 
     // 判断是否结束
     bool is_ended();
