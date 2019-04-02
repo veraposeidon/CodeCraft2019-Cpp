@@ -79,13 +79,18 @@ public:
                                    unordered_map<int, Car> &car_dict, int &road_id, order_info &first_order);
 
     // 获取第一优先级车辆信息
-    unordered_map<int, order_info> get_first_order_info(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict);
+    unordered_map<int, order_info>
+    get_first_order_info(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict);
 
     // 跨路口移动车辆
     void move_car_across(Car &car_obj, Road &this_road, Road &next_road, unordered_map<int, Car> &car_dict);
 
     // 调度路口
-    void update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross, int time);
+    void update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross,
+                      int time, vector<int > &priority_cars, Graph &graph);
+
+    // 在路口调度时上路
+    bool try_on_road_across(Car &car_obj, Road &next_road, unordered_map<int, Car> &car_dict);
 };
 
 #endif //CODECRAFT_2019_CROSS_H

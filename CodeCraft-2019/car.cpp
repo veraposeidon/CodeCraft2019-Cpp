@@ -83,7 +83,6 @@ void Car::mark_new_pos(int road_id, int channel, int pos, int this_cross, int ne
 /// \param suceed
 /// \return
 string Car::try_start(Graph &graph, int time) {
-
     // 如果已经在路上就不需要再启动了
     if (carStatus != WAITING_HOME) {
         return NO_ANSWER;

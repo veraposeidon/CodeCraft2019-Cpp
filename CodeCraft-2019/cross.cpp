@@ -328,16 +328,84 @@ void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unor
     }
 }
 
+
 /**
- * 调度路口多次
+ * 尝试在路口上路（在路口调度函数基础上修改）
+ * @param car_obj
+ * @param this_road
+ * @param next_road
+ * @param car_dict
+ */
+bool Cross::try_on_road_across(Car &car_obj, Road &next_road, unordered_map<int, Car> &car_dict) {
+    // 1. 找到待进入车道和位置
+    int next_channel = -1, e_pos = -1;
+    bool succeed = next_road.get_checkin_place_cross(next_channel, e_pos, car_dict);
+    // 前方道路堵住
+    // 前方道路堵住需要探讨（前方道路的车是终结态还是等待态，只要最后有车等待，那就可以等待，如果最后一排的车全为终结，那就终结）
+    if (!succeed){ // 表示下一条路全满
+        return false;   // 路全满情况下不管是不是有车等待都上不了路
+    }
+    // 前方道路没堵住
+    // 2. 根据车速和前车位置 判断新位置
+    int new_pos = std::min({car_obj.carSpeed - 1, next_road.roadSpeedLimit - 1, e_pos});
+    // 判断前方有无车辆
+    int front_pos = -1, front_id = -1;
+    bool has_c = next_road.has_car(next_channel, 0, new_pos + 1, front_pos, front_id);
+    // 前方有车
+    if (has_c) {
+        if (car_dict[front_id].is_car_waiting()){ //前车正在等待
+            return false;   // 有车等待即上不了路
+        }
+        // 前车结束
+        else {
+            int dis = front_pos;
+            assert (dis >= 1);  // 要是距离短于1就见鬼了
+            new_pos = front_pos - 1;  // 还能前进一段，新位置在前车屁股
+            //  新道路上移动车辆
+            next_road.move_car_to(next_channel, -1, new_pos, car_obj);
+            return true;
+        }
+    } else {
+        // 新道路上移动车辆
+        next_road.move_car_to(next_channel, -1, new_pos, car_obj);
+        return true;
+    }
+
+}
+
+
+/**
+ * 调度路口一次
+ * TODO：需要解决优先车辆上路问题，目前就是尽可能能上一辆是一辆吧
  * @param road_dict
  * @param car_dict
  * @param loops_every_cross
  */
 void
 Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross,
-                    int time) {
+                    int time, vector<int > &priority_cars, Graph &graph) {
     for (int i = 0; i < loops_every_cross; i++) {
+
+        // 复赛： 处理该路口的优先上路车辆
+        auto iter = priority_cars.begin();
+        while (iter != priority_cars.end())
+        {
+            int car_id = *iter;
+            Car &car_obj = car_dict[car_id];
+            string road_name = car_obj.try_start(graph, time);  // 每一辆都尝试上路即可，因为已经按ID排序了，满足时间即可// TODO：先满足所有车都上路，再来控制数量
+            if (road_name != NO_ANSWER) {
+                Road &road_obj = road_dict[road_name];
+                if (try_on_road_across(car_obj,road_obj,car_dict))   // 尝试上路，并成功的话
+                {
+                    iter = priority_cars.erase(iter);
+                }else{
+                    ++iter;
+                }
+            }else{
+                ++iter;
+            }
+        }
+
         // 获取待调度道路和车辆信息
         unordered_map<int, order_info> next_roads = get_first_order_info(road_dict, car_dict);
         // 如果没有待调度车辆，则判断该路口完成
@@ -396,6 +464,26 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
                     Road &this_road = road_dict[next_roads[roadID].road_name];
                     Road &next_road = road_dict[next_roads[roadID].next_road_name];
                     move_car_across(car_o, this_road, next_road, car_dict);
+                }
+
+                // 复赛： 调度完一次车辆后我再处理该路口的优先上路车辆
+                auto iter_again = priority_cars.begin();
+                while (iter_again != priority_cars.end())
+                {
+                    int car_id = *iter_again;
+                    Car &car_obj = car_dict[car_id];
+                    string road_name = car_obj.try_start(graph, time);  // 每一辆都尝试上路即可，因为已经按ID排序了，满足时间即可// TODO：先满足所有车都上路，再来控制数量
+                    if (road_name != NO_ANSWER) {
+                        Road &road_obj = road_dict[road_name];
+                        if (try_on_road_across(car_obj,road_obj,car_dict))   // 尝试上路，并成功的话
+                        {
+                            iter_again = priority_cars.erase(iter_again);
+                        }else{
+                            ++iter_again;
+                        }
+                    }else{
+                        ++iter_again;
+                    }
                 }
 
                 // 只更新该道路的优先序车辆
