@@ -165,8 +165,8 @@ bool Cross::get_road_first_order_info(string road_name, unordered_map<string, Ro
 
                 for (size_t i = 0; i < roads.size(); ++i) {
                     if (roads[i] == road_now_id) {
-                        size_t nexid = (i + 2) % 4;
-                        road_next_id2 = roads[nexid];
+                        size_t next_id = (i + 2) % 4;
+                        road_next_id2 = roads[next_id];
                         break;
                     }
                 }
@@ -187,7 +187,7 @@ bool Cross::get_road_first_order_info(string road_name, unordered_map<string, Ro
 
                 // 获取方向,填入信息
                 string direction = get_direction(road_now_id, road_next_id);
-                first_order =  order_info(car_obj.carID, road_name, road_next_id, next_road_name, direction);
+                first_order = order_info(car_obj.carID, road_name, road_next_id, next_road_name, direction);
                 road_id = road_now_id;
                 return true;
             }
@@ -229,7 +229,7 @@ Cross::get_first_order_info(unordered_map<string, Road> &road_dict, unordered_ma
  */
 void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unordered_map<int, Car> &car_dict) {
     // 1. 找到待进入车道和位置
-    int next_channel=-1, e_pos=-1;
+    int next_channel = -1, e_pos = -1;
     bool succeed = next_road.get_checkin_place_cross(next_channel, e_pos, car_dict);
     // 前方道路堵住
     // 前方道路堵住需要探讨（前方道路的车是终结态还是等待态，只要最后有车等待，那就可以等待，如果最后一排的车全为终结，那就终结）
@@ -291,7 +291,7 @@ void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unor
     else {
         int new_pos = real_dis - 1; // 注意下标
         // 判断前方有无车辆
-        int front_pos=-1, front_id=-1;
+        int front_pos = -1, front_id = -1;
         bool has_c = next_road.has_car(next_channel, 0, new_pos + 1, front_pos, front_id);
         // 前方有车
         if (has_c) {
@@ -335,7 +335,8 @@ void Cross::move_car_across(Car &car_obj, Road &this_road, Road &next_road, unor
  * @param loops_every_cross
  */
 void
-Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross, int time) {
+Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross,
+                    int time) {
     for (int i = 0; i < loops_every_cross; i++) {
         // 获取待调度道路和车辆信息
         unordered_map<int, order_info> next_roads = get_first_order_info(road_dict, car_dict);
@@ -358,7 +359,7 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
 
         // 根据优先级，分别判断每个路口是否满足出路口（路口规则）
         for (int roadID : roadIDs) {
-            int last_car_id= next_roads[roadID].car_id;   // 待调度车辆
+            int last_car_id = next_roads[roadID].car_id;   // 待调度车辆
             while (next_roads.find(roadID) != next_roads.end()) //确保路口的每一轮调度都最大化道路的运输能力，除非转弯顺序不允许或者没有待转弯车辆了。
             {
                 // 对方向进行判断
@@ -409,17 +410,16 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
                     int this_car_id = next_roads[roadID].car_id;
                     if (this_car_id == last_car_id) {
                         break; //  还是上一辆，说明没动，跳出，调度下一道路
-                    }else{
+                    } else {
                         last_car_id = this_car_id;
                     }
-                }else{
+                } else {
                     // 清除字典信息
                     next_roads.erase(next_roads.find(roadID));
                     break;
                 }
             }
         }
-
     }
 }
 

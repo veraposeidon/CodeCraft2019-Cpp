@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cassert>
 #include "trafficManager.h"
+# define INT_M 0x3f3f3f3f
 
 /**
  * 调度中心，构造函数
@@ -90,7 +91,7 @@ void trafficManager::get_start_list(vector<int> &order) {
     // 统计每个出发点的车数目
     // 统计权重和历史权重
     unordered_map<int, pair<double, double>> area_ratio;
-    size_t min_cars = INT_MAX; // 最少的车数出发点
+    size_t min_cars = INT_M; // 最少的车数出发点
     for (auto &id_time : area_dist) {
         int cross_id = id_time.first;
         sort(area_dist[cross_id].begin(), area_dist[cross_id].end(),
@@ -237,7 +238,6 @@ bool trafficManager::any_car_waiting(vector<int> &carOnRoadList) {
  * @param carAtHomeList
  * @param carOnRoadList
  * @return 时间片内入库的车数
- * 还有一个任务是统计所有车辆总调度时间，即车辆到达时间-预计出发时间
  */
 int trafficManager::update_cars(vector<int> &carAtHomeList, vector<int> &carOnRoadList) {
     int carSucceedNum = 0;
@@ -247,13 +247,13 @@ int trafficManager::update_cars(vector<int> &carAtHomeList, vector<int> &carOnRo
         int car_id = *iter;
         Car &car_obj = carDict[car_id];
 
-        if (car_obj.is_car_waiting_home()) {
-            carAtHomeList.push_back(car_id);
+        if (car_obj.is_car_waiting_home()) {    // 等待出发
+            carAtHomeList.push_back(car_id);    // 等待出发的车里存在优先车辆和非优先车辆
             ++iter;
-        } else if (car_obj.is_car_on_road()) {
+        } else if (car_obj.is_car_on_road()) {  // 已经在路上
             carOnRoadList.push_back(car_id);
             ++iter;
-        } else if (car_obj.is_ended()) {
+        } else if (car_obj.is_ended()) {    // 已经到达目的地
             carSucceedNum += 1;
 
             iter = launch_order.erase(iter);    // 发车列表中去除这个ID
@@ -329,13 +329,16 @@ unordered_map<int, schedule_result> trafficManager::get_result() {
  * 推演
  */
 bool trafficManager::inference() {
-    // 初始化时间
-    TIME = 0;
-    // 初始化有向图
-    graph = get_new_map();
+    TIME = 0;   // 初始化时间
+    graph = get_new_map();  // 初始化有向图
     // 初始化列表
     vector<int> carAtHomeList(0), carOnRoadList(0);
     update_cars(carAtHomeList, carOnRoadList);
+    // 初始化非优先车辆和优先车辆
+    vector<int> carNotPriorAtHomeList(0);
+    unordered_map<int, vector<pair<int, int> > > carPriorAtHome;
+    update_prior_cars(carAtHomeList, carNotPriorAtHomeList, carPriorAtHome);
+
     // 进入调度任务，直至完成
     while (!is_task_completed()) {
         // 1. 更新时间片
@@ -366,7 +369,6 @@ bool trafficManager::inference() {
                 }
             }
 
-
             cross_loop_alert += 1;
 
             if (cross_loop_alert > LOOPS_TO_DEAD_CLOCK) {
@@ -379,17 +381,13 @@ bool trafficManager::inference() {
 
                 // 找到堵死的路口
                 find_dead_clock();
-
                 // assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
                 return false;
             }
 
             if (cross_loop_alert >= LOOPS_TO_UPDATE) {
-                // TODO: 怂恿堵着的车辆换路线
-                // TODO: 高速路开高速车
-                // TODO: 定时更新策略
-                // 更新 有向图 权重
-                graph = get_new_map();
+                // TODO: 怂恿堵着的车辆换路线 // TODO: 高速路开高速车    // TODO: 定时更新策略
+                graph = get_new_map();  // 更新 有向图 权重
                 // 更新 路上车辆 路线
                 for (size_t i = 0; i < carOnRoadList.size(); i += UPDATE_FREQUENCE) {
                     int car_id = carOnRoadList[i];
@@ -400,10 +398,11 @@ bool trafficManager::inference() {
         }
         cout << ("TIME: " + to_string(TIME) + ", LOOPs " + to_string(cross_loop_alert)) << endl;
 
-        // 4. 处理准备上路的车辆
+        // 4. 复赛：处理待上路的非优先车辆
         carAtHomeList.clear();
         carOnRoadList.clear();
         int carsOnEnd = update_cars(carAtHomeList, carOnRoadList);
+
         size_t lenOnRoad = carOnRoadList.size();
         size_t lenAtHome = carAtHomeList.size();
 
@@ -429,7 +428,6 @@ bool trafficManager::inference() {
                 if (crossDict[car_obj.carFrom].call_times > 10) {
                     continue;
                 }
-
                 string road_name = car_obj.try_start(graph, TIME);
                 if (road_name != NO_ANSWER) {
                     Road &road_obj = roadDict[road_name];
@@ -456,8 +454,8 @@ bool trafficManager::inference() {
  * 所有车辆调度时间
  * @return
  */
-int trafficManager::total_schedule_time() {
-    int total = 0;
+long long trafficManager::total_schedule_time() {
+    long long total = 0;
     for (auto &car : carDict) {
         int car_id = car.first;
         int time = carDict[car_id].arriveTime - carDict[car_id].carPlanTime;
@@ -481,6 +479,32 @@ void trafficManager::find_dead_clock() {
     }
 
     cout << "Dead Clock: " << max_cross_id << endl;
+}
+
+/**
+ * 更新待上路的优先车辆和非优先车辆
+ * @param carAtHomeList
+ * @param carNotPriorAtHomeList
+ * @param carPriorAtHome
+ */
+void trafficManager::update_prior_cars(vector<int> &carAtHomeList, vector<int> &carNotPriorAtHomeList,
+                                       unordered_map<int, vector<pair<int, int> > > &carPriorAtHome) {
+    for(int &car_id:carAtHomeList)
+    {
+        if (!carDict[car_id].carPriority){   // 非优先车辆
+            carNotPriorAtHomeList.push_back(car_id);
+        } else{ // 优先车辆，按出发地点保存id和出发时间，
+            int cross_id = carDict[car_id].carFrom;
+            int time = carDict[car_id].carPlanTime;
+            carPriorAtHome[cross_id].push_back(make_pair(car_id, time)); // 塞入优先车辆ID和出发时间
+        }
+    }
+    // 每个路口的优先车辆按照出发时间升序排列
+    for(auto &cross:carPriorAtHome)
+    {
+        int cross_id = cross.first;
+        sort(carPriorAtHome[cross_id].begin(), carPriorAtHome[cross_id].end(),[=](pair<int,int>&a, pair<int,int>&b){return a.second < b.second;});
+    }
 }
 
 
