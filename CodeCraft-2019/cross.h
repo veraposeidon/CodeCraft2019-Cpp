@@ -19,6 +19,7 @@ struct order_info {
     int next_road_id;
     string next_road_name;
     string direction;
+    bool priority;
 
     order_info() {
         car_id = -1;
@@ -26,14 +27,16 @@ struct order_info {
         next_road_id = -1;
         next_road_name = "";
         direction = "";
+        priority = false;
     }
 
-    order_info(int carid, string r_name, int n_r_id, string n_r_name, string dir) {
+    order_info(int carid, string r_name, int n_r_id, string n_r_name, string dir, bool prior) {
         car_id = carid;
         road_name = std::move(r_name);
         next_road_id = n_r_id;
         next_road_name = std::move(n_r_name);
         direction = std::move(dir);
+        priority = prior;
     }
 };
 
@@ -69,10 +72,10 @@ public:
     string get_direction(int road_id, int next_road_id);
 
     // 判断有无直行进入目标车道的车辆发生冲突
-    bool has_straight_to_conflict(unordered_map<int, order_info> &roads_map, int target_road__id);
+    bool has_straight_to_conflict(unordered_map<int, order_info> &roads_map, int target_road_id, bool priority_car);
 
     // 判断有无直行或左转进入目标车道的车辆发生冲突
-    bool has_straight_left_to_conflict(unordered_map<int, order_info> &roads_map, int target_road__id);
+    bool has_straight_left_to_conflict(unordered_map<int, order_info> &roads_map, int target_road_id, bool priority_car);
 
     // 获取道路的出路口第一优先级车辆
     bool get_road_first_order_info(string road_name, unordered_map<string, Road> &road_dict,
@@ -87,10 +90,17 @@ public:
 
     // 调度路口
     void update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross,
-                      int time, vector<pair<int,int> > &priority_cars, Graph &graph);
+                      int time, vector<pair<int, int> > &priority_cars, Graph &graph);
 
     // 在路口调度时上路
     bool try_on_road_across(Car &car_obj, Road &next_road, unordered_map<int, Car> &car_dict);
+
+    // 调度路口
+    void process_cross(unordered_map<int, order_info> &next_roads, unordered_map<string, Road> &road_dict,
+                       unordered_map<int, Car> &car_dict, int time, vector<pair<int,int> > &priority_cars,  Graph &graph);
+
+    // 有无优先车辆到目标道路
+    bool has_prior_car_conflict(unordered_map<int, order_info> &roads_map, int target_road_id);
 };
 
 #endif //CODECRAFT_2019_CROSS_H
