@@ -346,7 +346,8 @@ double Road::get_road_weight(double dist_k = 1.0) {
 }
 
 /**
- * 获取本条道路的第一优先级车辆（只考虑出路口的车辆
+ * 获取本条道路的第一优先级车辆（只考虑出路口的车辆）
+ * TODO: 复赛： 优先级车辆的变动（当前道路只要优先车辆前方无其他车辆阻挡，优先车辆即可通过）
  * @return
  */
 int Road::get_first_order_car(unordered_map<int, Car> &car_dict) {
@@ -354,22 +355,50 @@ int Road::get_first_order_car(unordered_map<int, Car> &car_dict) {
         return first_order_car_id;
 
     // 根据优先序列遍历车辆
+    // 到此处first_order_car_id = -1
+    int normal_first_order_car = -1;    // 非优先车辆的第一优先级
+    int prior_first_order_car = -1;     // 优先车辆的第一优先级
     for (int pos = roadLength - 1; pos >= 0; --pos) {
         for (int channel = 0; channel < roadChannel; ++channel) {
+            if(prior_first_order_car !=-1){
+                break;  // 已经有优先车辆就可以结束循环了
+            }
+
             if (roadStatus[channel][pos] != -1) {
                 // 获取车对象
                 int car_id = roadStatus[channel][pos];
                 // 是否等待出路口
                 if (car_dict[car_id].is_car_waiting_out()) {
-                    first_order_car_id = car_id; // 记录第一优先车辆ID
-                    return first_order_car_id;
+                    // 1. 出路口的先决条件仍是只为出路口车辆服务
+                    if(!car_dict[car_id].carPriority)   // 非优先车辆
+                    {
+                        if(normal_first_order_car == -1)    // 只标记第一辆
+                            normal_first_order_car = car_id;
+                    }else{  // 优先车辆
+                        // 判断该优先车前方有无阻挡
+                        int position, carid;
+                        if(has_car(channel, pos+1, roadLength, position, carid)){
+                            continue;   // 表示有阻挡
+                        }
+
+                        // 没有阻挡
+                        if(prior_first_order_car == -1)
+                            prior_first_order_car = car_id; // 第一辆优先车辆
+                    }
                 }
             }
         }
     }
-
-    // -1表示没有车辆
-    return -1;
+    // 比较有无优先级车辆了
+    if(prior_first_order_car != -1){
+        first_order_car_id = prior_first_order_car;
+        return first_order_car_id;
+    }else if(normal_first_order_car != -1){
+        first_order_car_id = normal_first_order_car;
+        return first_order_car_id;
+    }else{
+        return -1;
+    }
 }
 
 /**
