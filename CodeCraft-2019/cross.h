@@ -87,7 +87,7 @@ public:
 
     // 调度路口
     void update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross,
-                      int time, vector<int > &priority_cars, Graph &graph);
+                      int time, vector<pair<int,int> > &priority_cars, Graph &graph);
 
     // 在路口调度时上路
     bool try_on_road_across(Car &car_obj, Road &next_road, unordered_map<int, Car> &car_dict);

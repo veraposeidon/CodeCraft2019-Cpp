@@ -50,6 +50,7 @@ Road::Road(const int road_id, const int length, const int speed_limit, const int
 
 /*
  * 更新道路，时间片内第一次调度
+ * 在车道内行驶，由于不可以超车，所以仍是按序行驶
  */
 void Road::update_road(unordered_map<int, Car> &car_dict) {
     for (int grid = roadLength - 1; grid >= 0; --grid) {
@@ -107,13 +108,6 @@ void Road::update_car(Car &car_obj, int channel, int grid, unordered_map<int, Ca
         }
             // 前方无车
         else {
-//            // 前方到家
-//            if (car_obj.is_car_way_home()) {
-//                move_car_home(car_obj); // 到家   TODO: 回家不应该立即结束，也应等待调度
-//            } else {
-//                // 前方出路口
-//                car_obj.change2waiting_out();  // 标记为等待调度出路口
-//            }
             car_obj.change2waiting_out();  // 标记为等待调度出路口
         }
     }

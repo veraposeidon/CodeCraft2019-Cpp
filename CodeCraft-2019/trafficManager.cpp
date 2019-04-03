@@ -336,7 +336,7 @@ bool trafficManager::inference() {
     update_cars(carAtHomeList, carOnRoadList);
     // 初始化非优先车辆和优先车辆
     vector<int> carNotPriorAtHomeList(0);   // 非优先待上路车辆
-    unordered_map<int, vector<int> > carPriorAtHome;    // 优先待上路车辆
+    unordered_map<int, vector<pair<int,int>> > carPriorAtHome;    // 优先待上路车辆
     update_prior_cars(carAtHomeList, carNotPriorAtHomeList, carPriorAtHome);
 
     // 进入调度任务，直至完成
@@ -345,8 +345,7 @@ bool trafficManager::inference() {
         TIME += TIME_STEP;
 
         // 2. 更新所有车道（调度一轮即可）。
-        // 2.1 获取道路ID列表 调度顺序无关
-        // TODO: 更新道路上的优先车辆和非优先车辆
+        // 2.1 获取道路ID列表 调度顺序无关。同时道路内的车辆调度不涉及优先级
         for (auto &road : roadDict) {
             string road_name = road.first;
             roadDict[road_name].update_road(carDict);
@@ -366,7 +365,7 @@ bool trafficManager::inference() {
             // 调度一轮所有路口
             for (int cross_id : crossList) {
                 Cross &cross = crossDict[cross_id]; // 路口
-                vector<int > &priority_cars = carPriorAtHome[cross_id];  // 该路口的待调度的优先车辆
+                vector<pair<int,int>> &priority_cars = carPriorAtHome[cross_id];  // TODO: 该路口的待调度的优先车辆(后期注意控制车辆数目)
                 if (!cross.if_cross_ended()) {
                     cross.update_cross(roadDict, carDict, CROSS_LOOP_TIMES, TIME, priority_cars, graph);    // 更新一次路口
                 }
@@ -486,23 +485,24 @@ void trafficManager::find_dead_clock() {
  * @param carPriorAtHome
  */
 void trafficManager::update_prior_cars(vector<int> &carAtHomeList, vector<int> &carNotPriorAtHomeList,
-                                       unordered_map<int, vector<int> > &carPriorAtHome) {
+                                       unordered_map<int, vector<pair<int, int>> > &carPriorAtHome) {
     for(int &car_id:carAtHomeList)
     {
         if (!carDict[car_id].carPriority){   // 非优先车辆
             carNotPriorAtHomeList.push_back(car_id);
         } else{ // 优先车辆，按出发地点保存id和出发时间，
             int cross_id = carDict[car_id].carFrom;
-//            int time = carDict[car_id].carPlanTime;
-            carPriorAtHome[cross_id].push_back(car_id); // 塞入优先车辆ID
+            int time = carDict[car_id].carPlanTime;
+            carPriorAtHome[cross_id].push_back(make_pair(car_id, time)); // 塞入优先车辆ID
         }
     }
     // 每个路口的优先车辆按照出发时间升序排列
     for(auto &cross:carPriorAtHome)
     {
         int cross_id = cross.first;
-        sort(carPriorAtHome[cross_id].begin(), carPriorAtHome[cross_id].end()); // 按ID排序
-//        sort(carPriorAtHome[cross_id].begin(), carPriorAtHome[cross_id].end(),[=](pair<int,int>&a, pair<int,int>&b){return a.second < b.second;});
+//        sort(carPriorAtHome[cross_id].begin(), carPriorAtHome[cross_id].end()); // 按ID排序
+//        sort(carPriorAtHome[cross_id].begin(), carPriorAtHome[cross_id].end(),[=](pair<int,int>&a, pair<int,int>&b){return a.second < b.second;});    // 按时间排序
+        sort(carPriorAtHome[cross_id].begin(), carPriorAtHome[cross_id].end(),[=](pair<int,int>&a, pair<int,int>&b){return a.first < b.first;});    // 按ID排序
     }
 }
 

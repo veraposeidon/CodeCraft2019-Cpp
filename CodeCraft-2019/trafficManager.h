@@ -93,7 +93,7 @@ public:
 
     // 遍历车辆，更新优先车辆和非优先车辆列表
     void update_prior_cars(vector<int> &carAtHomeList, vector<int> &carNotPriorAtHomeList,
-                           unordered_map<int, vector<int> > &carPriorAtHome);
+                           unordered_map<int, vector<pair<int, int>> > &carPriorAtHome);
 
     // 是否所有车辆演算结束
     bool is_task_completed();
@@ -115,4 +115,4 @@ public:
 };
 
 
-#endif //CODECRAFT_2019_TRAFFICMANAGER_H
+#endif // CODECRAFT_2019_TRAFFICMANAGER_H
