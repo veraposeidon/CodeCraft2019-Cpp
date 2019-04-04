@@ -408,12 +408,12 @@ bool Cross::try_on_road_across(Car &car_obj, Road &next_road, unordered_map<int,
  */
 void
 Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross,
-                    int time, vector<pair<int,int> > &priority_cars, Graph &graph) {
+                    int time, vector<pair<int,int> > &priority_cars, Graph &graph, int&task_num) {
     for (int i = 0; i < loops_every_cross; i++) {
 
         // TODO 复赛： 处理该路口的优先上路车辆
         auto iter = priority_cars.begin();
-        while (iter != priority_cars.end())
+        while (iter != priority_cars.end() && task_num > 0)
         {
             int car_id = (*iter).first;
             Car &car_obj = car_dict[car_id];
@@ -422,6 +422,7 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
                 Road &road_obj = road_dict[road_name];
                 if (try_on_road_across(car_obj,road_obj,car_dict))   // 尝试上路，并成功的话
                 {
+                    task_num--;
                     iter = priority_cars.erase(iter);   // 删除元素
                 }else{
                     ++iter;
@@ -442,7 +443,7 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
         call_times += 1;
 
         // 调度路口
-        process_cross(next_roads, road_dict, car_dict, time, priority_cars, graph);
+        process_cross(next_roads, road_dict, car_dict, time, priority_cars, graph, task_num);
 
     }
 }
@@ -456,7 +457,7 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
  * @param graph
  */
 void Cross::process_cross(unordered_map<int, order_info> &next_roads, unordered_map<string, Road> &road_dict,
-                          unordered_map<int, Car> &car_dict, int time, vector<pair<int,int> > &priority_cars,  Graph &graph) {
+                          unordered_map<int, Car> &car_dict, int time, vector<pair<int,int> > &priority_cars,  Graph &graph, int& tasknum) {
     // 路口调度信息
     vector<int> roadIDs(0);
     for (auto &road : next_roads) {
@@ -540,8 +541,9 @@ void Cross::process_cross(unordered_map<int, order_info> &next_roads, unordered_
             }
 
             // TODO 复赛： 处理该路口的优先上路车辆
+            // TODO 复赛： 处理该路口的优先上路车辆
             auto iter = priority_cars.begin();
-            while (iter != priority_cars.end())
+            while (iter != priority_cars.end() && tasknum > 0)
             {
                 int car_id = (*iter).first;
                 Car &car_obj = car_dict[car_id];
@@ -550,6 +552,7 @@ void Cross::process_cross(unordered_map<int, order_info> &next_roads, unordered_
                     Road &road_obj = road_dict[road_name];
                     if (try_on_road_across(car_obj,road_obj,car_dict))   // 尝试上路，并成功的话
                     {
+                        tasknum--;
                         iter = priority_cars.erase(iter);   // 删除元素
                     }else{
                         ++iter;

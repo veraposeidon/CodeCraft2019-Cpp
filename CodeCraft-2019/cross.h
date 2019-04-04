@@ -90,14 +90,14 @@ public:
 
     // 调度路口
     void update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross,
-                      int time, vector<pair<int, int> > &priority_cars, Graph &graph);
+                      int time, vector<pair<int, int> > &priority_cars, Graph &graph, int& task_num);
 
     // 在路口调度时上路
     bool try_on_road_across(Car &car_obj, Road &next_road, unordered_map<int, Car> &car_dict);
 
     // 调度路口
     void process_cross(unordered_map<int, order_info> &next_roads, unordered_map<string, Road> &road_dict,
-                       unordered_map<int, Car> &car_dict, int time, vector<pair<int,int> > &priority_cars,  Graph &graph);
+                       unordered_map<int, Car> &car_dict, int time, vector<pair<int,int> > &priority_cars,  Graph &graph, int& tasknum);
 
     // 有无优先车辆到目标道路
     bool has_prior_car_conflict(unordered_map<int, order_info> &roads_map, int target_road_id);

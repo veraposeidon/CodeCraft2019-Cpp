@@ -62,8 +62,6 @@ public:
 
     // 获取本条道路的第一优先级车辆
     int get_first_order_car(unordered_map<int, Car> &car_dict);
-
-
 };
 
 

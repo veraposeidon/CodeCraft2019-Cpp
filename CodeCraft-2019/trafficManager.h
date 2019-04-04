@@ -7,7 +7,7 @@
 
 // 场上车辆数目
 //#define CARS_ON_ROAD  {9000,8500, 8000, 5000, 3000, 2000}    // 大参数跑成绩，小参数保命
-#define CARS_ON_ROAD  {1000}    // 大参数跑成绩，小参数保命
+#define CARS_ON_ROAD  {200}    // 大参数跑成绩，小参数保命
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
@@ -112,6 +112,9 @@ public:
 
     // 找到堵死路口
     void find_dead_clock();
+
+    // 计算系数因子
+    double calc_factor_a();
 };
 
 
