@@ -18,14 +18,11 @@
  * @param car_dict
  * @param road_dict
  */
-trafficManager::trafficManager(topology_type &topo, unordered_map<int, Cross> &cross_dict,
-                               unordered_map<int, Car> &car_dict, unordered_map<string, Road> &road_dict,
-                               size_t on_road_cars) {
-    topology = topo;
+trafficManager::trafficManager(unordered_map<int, Cross> &cross_dict,
+                               unordered_map<int, Car> &car_dict, unordered_map<string, Road> &road_dict) {
     crossDict = cross_dict;
     carDict = car_dict;
     roadDict = road_dict;
-    how_many_cars_on_road = on_road_cars;
 
     TIME = 0;
     TIME_STEP = 1;

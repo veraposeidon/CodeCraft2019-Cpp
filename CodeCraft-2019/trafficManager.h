@@ -79,8 +79,8 @@ public:
     vector<int> crossList;  // 路口遍历顺序
 
     // 构造函数
-    trafficManager(topology_type &topo, unordered_map<int, Cross> &cross_dict, unordered_map<int, Car> &car_dict,
-                   unordered_map<string, Road> &road_dict, size_t on_road_cars);
+    trafficManager(unordered_map<int, Cross> &cross_dict, unordered_map<int, Car> &car_dict,
+                   unordered_map<string, Road> &road_dict);
 
     // 初始化上路顺序
     void get_start_list(vector<int> &order);

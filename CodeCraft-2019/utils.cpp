@@ -188,3 +188,43 @@ unordered_map<int, presetCar> read_presetCars(string presets_path) {
     }
     return presetCars_dict;
 }
+
+/**
+ * 读取调度结果：预置车辆除外
+ * @param answers_path
+ * @return
+ */
+unordered_map<int, presetCar> read_answer(string answers_path) {
+    // 初始化map
+    unordered_map<int, presetCar> Cars_dict;
+    // 打开文件
+    ifstream anserCar_file(answers_path);
+    string line;
+    if (anserCar_file.is_open()) {
+        while (getline(anserCar_file, line))    // 读取每一行
+        {
+            if (line.rfind('#') == 0)
+                continue;
+
+            // 去除首尾括号
+            string data;
+            data = strip(string(line), '(');
+            data = strip(string(data), ')');
+
+            vector<string> datalist = split(data, ",");
+
+            int car_id = stoi(datalist[0]); // 预置车辆编号
+            int time = stoi(datalist[1]); // 预置车辆出发时间
+            vector<int> routes;     // 预置车辆路径
+            for (size_t i = 2; i < datalist.size(); ++i) {
+                routes.push_back(stoi(datalist[i]));
+            }
+            // 预置车结构体
+            presetCar car = presetCar(car_id, time, routes);
+            // 添加到字典
+            Cars_dict[car.car_id] = car;
+        }
+        anserCar_file.close();
+    }
+    return Cars_dict;
+}

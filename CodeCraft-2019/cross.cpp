@@ -541,7 +541,6 @@ void Cross::process_cross(unordered_map<int, order_info> &next_roads, unordered_
             }
 
 //            // TODO 复赛： 处理该路口的优先上路车辆
-            // Judger
 //            auto iter = priority_cars.begin();
 //            while (iter != priority_cars.end() && tasknum > 0)
 //            {

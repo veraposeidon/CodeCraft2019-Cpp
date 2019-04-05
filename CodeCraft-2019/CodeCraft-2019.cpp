@@ -38,10 +38,8 @@ int main(int argc, char *argv[]) {
     auto road_dict = read_road(roadPath);
     auto cross_dict = read_cross(crossPath);
     auto preset_car_dict = read_presetCars(presetAnswerPath);
+    auto answer_dict = read_answer(answerPath);
 
-    // 第二步：处理数据
-    // 1. 生成拓扑字典
-    auto topologyDict = create_topology(road_dict);
 
     // 2. 生成车辆对象
     unordered_map<int, Car> cars;
@@ -110,58 +108,17 @@ int main(int argc, char *argv[]) {
     cross_dict.clear();
 
     // 5. 拷贝预置车辆信息
-    for(auto &preset_car: preset_car_dict)
+    for(auto &preset_car: answer_dict)
     {
         int car_id = preset_car.first;
         cars[car_id].set_preset_route(preset_car.second.real_start_time, preset_car.second.routes);
     }
 
 
-    // 6. 调度中心 参数集合
-    vector<int> para_car_on_road = CARS_ON_ROAD;
+    // 6. 调度中心
 
-    trafficManager manager = trafficManager(topologyDict, crosses, cars, roads, para_car_on_road[0]);;
-    for (int cars_on_road : para_car_on_road) {
-        // 调度中心
-        // 一次换一组参数
-        manager = trafficManager(topologyDict, crosses, cars, roads, cars_on_road);
-
-        // 推演并判断结果，不行换下一组参数
-        bool success = manager.inference();
-        if (success) {
-            break;  // 完成任务结束
-        } else {
-            continue; // 不完成任务则进行下一轮
-        }
-    }
-
-
-    // 7 拉取结果
-    // unordered_map<int, schedule_result>();
-    auto result = manager.get_result();
-
-    // 三/写文件
-    ofstream answerFile(answerPath);
-    if(answerFile.is_open())
-    {
-        for(auto &item: result)
-        {
-            int car_id = item.first;
-            int time = item.second.startTime;
-            std::stringstream ss;
-            for (size_t i = 0; i < item.second.passedBy.size(); ++i) {
-                if(i!=0)
-                    ss << ", ";
-                ss << item.second.passedBy[i];
-            }
-            string s = ss.str();
-
-            string singletxt = "(" + to_string(car_id) + ", " + to_string(time) + ", " + s + ")" + "\n";
-
-            answerFile << singletxt;
-        }
-    }
-    answerFile.close();
+    trafficManager manager = trafficManager(crosses, cars, roads);
+    manager.inference();
 
 
     // 程序结束用时

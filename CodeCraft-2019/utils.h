@@ -42,5 +42,7 @@ unordered_map<int, unordered_map<string, int>> read_car(string car_path);
 
 unordered_map<int, presetCar> read_presetCars(string presets_path);
 
+unordered_map<int, presetCar> read_answer(string answers_path);
+
 
 #endif //CODECRAFT_2019_UTILS_H
