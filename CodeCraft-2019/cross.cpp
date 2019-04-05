@@ -540,27 +540,27 @@ void Cross::process_cross(unordered_map<int, order_info> &next_roads, unordered_
                 move_car_across(car_o, this_road, next_road, car_dict);
             }
 
-            // TODO 复赛： 处理该路口的优先上路车辆
-            // TODO 复赛： 处理该路口的优先上路车辆
-            auto iter = priority_cars.begin();
-            while (iter != priority_cars.end() && tasknum > 0)
-            {
-                int car_id = (*iter).first;
-                Car &car_obj = car_dict[car_id];
-                string road_name = car_obj.try_start(graph, time);  // 每一辆都尝试上路即可，因为已经按ID排序了，内部判断满足时间即可
-                if (road_name != NO_ANSWER) {
-                    Road &road_obj = road_dict[road_name];
-                    if (try_on_road_across(car_obj,road_obj,car_dict))   // 尝试上路，并成功的话
-                    {
-                        tasknum--;
-                        iter = priority_cars.erase(iter);   // 删除元素
-                    }else{
-                        ++iter;
-                    }
-                }else{
-                    ++iter;
-                }
-            }
+//            // TODO 复赛： 处理该路口的优先上路车辆
+//            // TODO 复赛： 处理该路口的优先上路车辆
+//            auto iter = priority_cars.begin();
+//            while (iter != priority_cars.end() && tasknum > 0)
+//            {
+//                int car_id = (*iter).first;
+//                Car &car_obj = car_dict[car_id];
+//                string road_name = car_obj.try_start(graph, time);  // 每一辆都尝试上路即可，因为已经按ID排序了，内部判断满足时间即可
+//                if (road_name != NO_ANSWER) {
+//                    Road &road_obj = road_dict[road_name];
+//                    if (try_on_road_across(car_obj,road_obj,car_dict))   // 尝试上路，并成功的话
+//                    {
+//                        tasknum--;
+//                        iter = priority_cars.erase(iter);   // 删除元素
+//                    }else{
+//                        ++iter;
+//                    }
+//                }else{
+//                    ++iter;
+//                }
+//            }
 
             // 只更新该道路的优先序车辆
             int road_id = -1;

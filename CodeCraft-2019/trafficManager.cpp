@@ -446,6 +446,11 @@ bool trafficManager::inference() {
     cout << "Tasks Completed! " << endl;
     cout << "system schedule time is: " + to_string(TIME) << endl;
     cout << "all cars total schedule time: " + to_string(total_schedule_time()) << endl;
+    int car_prior_plan_time;
+    int factor_a = int (calc_factor_a(car_prior_plan_time));
+    int prior_schedule_time = TIME -car_prior_plan_time;
+    int T = factor_a * prior_schedule_time + TIME;
+    cout << "new schedule time: " + to_string(T) << endl;
     return true;
 }
 
@@ -509,7 +514,7 @@ void trafficManager::update_prior_cars(vector<int> &carAtHomeList, vector<int> &
  * 计算系数因子a
  * @return
  */
-double trafficManager::calc_factor_a() {
+double trafficManager::calc_factor_a(int &first_car_plan_time) {
     int cars_total = 0;
     int cars_prior_total = 0;
     int maxspeed = 0;
@@ -524,6 +529,7 @@ double trafficManager::calc_factor_a() {
     set<int> starts_prior;
     set<int> ends;
     set<int> ends_prior;
+    int first_prior_plan_time = 0x3f3f3f3f; // 最早计划出发时间最早的优先车辆计划出发时间
 
     for(auto &item :carDict){
         int car_id = item.first;
@@ -557,6 +563,9 @@ double trafficManager::calc_factor_a() {
                 timefirst_prior = car.startTime;
             starts_prior.insert(car.carFrom);
             ends_prior.insert(car.carTo);
+
+            if(car.carPlanTime < first_prior_plan_time)
+                first_prior_plan_time = car.carPlanTime;
         }
     }
 
@@ -565,7 +574,7 @@ double trafficManager::calc_factor_a() {
             (timelast * 1.0 / timefirst) / (timelast_prior * 1.0 / timefirst_prior) * 0.2375 +
             (starts.size() * 1.0 / starts_prior.size()) * 0.2375 +
             (ends.size() * 1.0 / ends_prior.size()) * 0.2375;
-
+    first_car_plan_time = first_prior_plan_time;
     return a;
 }
 
