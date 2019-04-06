@@ -515,7 +515,10 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time) {
     }
     // 如果没有预置车辆，那就处理非预置车辆
     else if(!satisfied_no_preset_cars.empty()){
-        try_cars = satisfied_preset_cars;
+        size_t maxnum = 2;
+        size_t len = min(maxnum, satisfied_no_preset_cars.size());
+        try_cars.assign(satisfied_no_preset_cars.begin(), satisfied_no_preset_cars.begin() + len);
+//        try_cars = satisfied_no_preset_cars;
         preset = false;
     }
 
@@ -580,7 +583,10 @@ int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time) {
     }
         // 如果没有预置车辆，那就处理非预置车辆
     else if(!satisfied_no_preset_cars.empty()){
-        try_cars = satisfied_preset_cars;
+        // FIXME: 先处理每条路处理2辆
+        size_t maxnum = 2;
+        size_t len = min(maxnum, satisfied_no_preset_cars.size());
+        try_cars.assign(satisfied_no_preset_cars.begin(), satisfied_no_preset_cars.begin() + len);
         preset = false;
     }
 

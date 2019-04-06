@@ -384,7 +384,7 @@ bool trafficManager::inference() {
 
             cross_loop_alert += 1;
             if (cross_loop_alert > LOOPS_TO_DEAD_CLOCK) {
-                cout << "**************死锁****************" << endl;
+                cout << "**************Dead Clock****************" << endl;
                 find_dead_clock();  // 找到堵死的路口
                 // assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
                 return false;
@@ -403,54 +403,23 @@ bool trafficManager::inference() {
         }
         cout << ("TIME: " + to_string(TIME) + ", LOOPs " + to_string(cross_loop_alert)) << endl;
 
-        // 4. 更新车辆列表 TODO: 新式的上路方式改为由第一条道路决定
-        int carsOnEnd = update_cars(carAtHomeList, carOnRoadList);  // 计算路口调度后回家的车辆
-        size_t lenOnRoad = carOnRoadList.size();    // 路上车辆
-        size_t lenAtHome = carAtHomeList.size();    // 待出发车辆
+        // 4. 更新车辆列表
+
         int count_start = priors_count;    // 上路车数
-        int connt_second = 0;
         // 先不控制上路数量
         for (auto &road : roadDict) {
             string road_name = road.first;
-            int num = roadDict[road_name].start_un_priors(carDict, TIME);
-
-            connt_second += num;
+            count_start += roadDict[road_name].start_un_priors(carDict, TIME);  // 每条路上路
         }
-//        if (lenOnRoad < how_many_cars_on_road) {
-//            // 为保持场上数量, 计算仍需上路的数目
-//            size_t how_many_need_on_road_this_time = 0;
-//            how_many_need_on_road_this_time = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
-//
-//            // TODO: 只负责非优先,不负责优先车辆了
-//            size_t not_priors_count=0;
-//            while( not_priors_count < how_many_need_on_road_this_time ){
-//
-//            }
-//            for (unsigned int i = 0; i < how_many; ++i) {
-//                int car_id = car_ordered[i];
-//                Car &car_obj = carDict[car_id];
-//
-//                // 判断道路挤不挤，挤就不上路
-//                if (crossDict[car_obj.carFrom].call_times > 10) {
-//                    continue;
-//                }
-//                string road_name = car_obj.try_start(graph, TIME);
-//                if (road_name != NO_ANSWER) {
-//                    Road &road_obj = roadDict[road_name];
-//                    if (road_obj.try_on_road(car_obj))   // 尝试上路
-//                    {
-//                        count_start += 1;
-//                        carOnRoadList.push_back(car_obj.carID);
-//                        lenOnRoad += 1;
-//                        lenAtHome -= 1;
-//                    }
-//                }
-//            }
-//        }
-        cout << to_string(priors_count) + "," + to_string(lenOnRoad)  + "," + to_string(lenAtHome)   << endl;
-//        cout << to_string(count_start) + "," + to_string(lenAtHome) + "," +
-//                to_string(lenOnRoad) + "," +
-//                to_string(carsOnEnd) << endl;
+
+        int carsOnEnd = update_cars(carAtHomeList, carOnRoadList);  // 计算路口调度后回家的车辆
+        size_t lenOnRoad = carOnRoadList.size();    // 路上车辆
+        size_t lenAtHome = carAtHomeList.size();    // 待出发车辆
+        cout << "priors on: " + to_string(priors_count) + ", "
+            + "total on: " + to_string(count_start)  + ", "
+            + "len on road: " + to_string(lenOnRoad) + ", "
+            + "len at home: " + to_string(lenAtHome) + ", "
+            + "arrived: " + to_string(carsOnEnd) << endl;
     }
 
     cout << "Tasks Completed! " << endl;
