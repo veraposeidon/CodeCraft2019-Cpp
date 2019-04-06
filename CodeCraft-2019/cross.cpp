@@ -423,7 +423,6 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
 
         // 调度路口
         process_cross(next_roads, road_dict, car_dict, time, graph);
-
     }
 }
 

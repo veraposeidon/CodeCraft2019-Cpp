@@ -268,27 +268,27 @@ void Car::set_preset_route(int time, vector<int> routes, topology_type &topology
 }
 
 /**
- * 计算优先车辆的上路名称
+ * 计算车辆的上路名称(第一条路就算固定下来了)
  * @param graph
  * @return
  */
 string Car::on_road_name(Graph &graph) {
-    // 断言判断优先车辆
-    assert(carPriority);
 
-    // 对于非预置车辆
+    // 对于非预置车辆，需要生成一下路径来获取第一段路
+    if(!carPreset){
+        // 1. 起点，终点和路径
+        int start = carFrom;
+        int end = carTo;
+        // 初始化路径
+        assert(strategy.empty());   // 之前应该是空的
+        strategy = graph.short_path_finding(start, end);
+    }
 
-    // 1. 起点，终点和路径
-    int start = carFrom;
-    int end = carTo;
-    // 最佳路径
-    strategy = graph.short_path_finding(start, end);
     int now_cross = strategy[0];
     int next_cross = strategy[1];
-
-    // 2. 下段路名称
+    // 2. 上路名称
     string name = to_string(now_cross) + "_" + to_string(next_cross);
-    return std::__cxx11::string();
+    return name;
 }
 
 

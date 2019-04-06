@@ -20,7 +20,10 @@ public:
     int roadDest;           // 道路终点
     vector<vector<int> > roadStatus;    // 道路详情
     int first_order_car_id; // 出路口第一优先级车辆
-    vector<int> prior_cars; // 本条路负责上路的优先车辆
+    vector<int> prior_cars_preset;      // 本条路负责上路的优先车辆(预置)
+    vector<int> prior_cars_unpreset;    // 本条路负责上路的优先车辆(非预置)
+    vector<int> unpriors_cars_preset; // 本条路负责上路的非优先车辆(预置)
+    vector<int> unpriors_cars_unpreset; // 本条路负责上路的非优先车辆(非预置)
     // 默认构造函数
     Road();
     // 构造函数
@@ -46,7 +49,7 @@ public:
     bool get_checkin_place_cross(int &e_channel, int &e_pos, unordered_map<int, Car> &car_dict);
 
     // 车辆入驻道路
-    bool try_on_road(Car &car_obj);
+    bool try_on_road(Car &car_obj, int time);
 
     // 当有车更新到终止态之后，要更新一次当前车道的车辆
     void update_channel(int channel_id, unordered_map<int, Car> &car_dict);
@@ -62,6 +65,12 @@ public:
 
     // 获取本条道路的第一优先级车辆
     int get_first_order_car(unordered_map<int, Car> &car_dict);
+
+    // 对优先级的车辆进行上路处理
+    int start_priors(unordered_map<int, Car> &car_dict, int time);
+
+    // 对非优先车辆进行上路处理
+    int start_un_priors(unordered_map<int, Car> &car_dict, int time);
 };
 
 

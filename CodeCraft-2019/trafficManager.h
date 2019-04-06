@@ -76,10 +76,6 @@ public:
 
     unordered_map<int, schedule_result> result; // 调度结果
     vector<int> launch_order;   // 车辆待启动序列
-    vector<int> launch_order_preset_priors;   // 预置优先车辆
-    vector<int> launch_order_preset_notpriors;   // 预置非优先车辆
-    vector<int> launch_order_notpreset_priors;   // 非预置优先车辆
-    vector<int> launch_order_notpreset_notpriors;   // 非预置非优先车辆
 
     vector<int> crossList;  // 路口遍历顺序
 
@@ -122,7 +118,7 @@ public:
     double calc_factor_a(int &first_car_plan_time);
 
     // 初始化每条道路的优先车辆
-    void update_road_prior_cars();
+    void initialize_road_prior_cars_and_normal_cars();
 
 };
 
