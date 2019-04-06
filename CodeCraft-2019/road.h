@@ -67,10 +67,10 @@ public:
     int get_first_order_car(unordered_map<int, Car> &car_dict);
 
     // 对优先级的车辆进行上路处理
-    int start_priors(unordered_map<int, Car> &car_dict, int time);
+    int start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overed);
 
     // 对非优先车辆进行上路处理
-    int start_un_priors(unordered_map<int, Car> &car_dict, int time);
+    int start_un_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overed);
 };
 
 

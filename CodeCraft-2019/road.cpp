@@ -481,7 +481,7 @@ bool Road::get_checkin_place_cross(int &e_channel, int &e_pos, unordered_map<int
  * // FIXME: 先按能上则上来，后期调整数量
  * // FIXME: 后期改进时间复杂度， 先排好序，不重新调用sort了。
  */
-int Road::start_priors(unordered_map<int, Car> &car_dict, int time) {
+int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overed) {
     // 判空处理
     if(prior_cars_preset.empty() && prior_cars_unpreset.empty())
         return 0;
@@ -514,12 +514,15 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time) {
         preset = true;
     }
     // 如果没有预置车辆，那就处理非预置车辆
-    else if(!satisfied_no_preset_cars.empty()){
-        size_t maxnum = 2;
+    else if(!satisfied_no_preset_cars.empty() && !cars_overed){
+        size_t maxnum = 1;
         size_t len = min(maxnum, satisfied_no_preset_cars.size());
         try_cars.assign(satisfied_no_preset_cars.begin(), satisfied_no_preset_cars.begin() + len);
 //        try_cars = satisfied_no_preset_cars;
         preset = false;
+    }else{
+        // 没有候选车辆或者场上车数过多 // 直接不上车辆了
+        return 0;
     }
 
     // 3. 对待上路列表进行处理
@@ -545,11 +548,12 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time) {
 /**
  * 处理非优先车辆
  * // FIXME: 也是分预置和非预置处理
+ * 要是场上车数多了，就不上非预置的车了
  * @param car_dict
  * @param time
  * @return
  */
-int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time) {
+int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time , bool cars_overed) {
     // 判空处理
     if(unpriors_cars_preset.empty() && unpriors_cars_unpreset.empty())
         return 0;
@@ -582,14 +586,17 @@ int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time) {
         preset = true;
     }
         // 如果没有预置车辆，那就处理非预置车辆
-    else if(!satisfied_no_preset_cars.empty()){
+    else if(!satisfied_no_preset_cars.empty() && !cars_overed){
         // FIXME: 先处理每条路处理2辆
-        size_t maxnum = 2;
+        size_t maxnum = 1;
         size_t len = min(maxnum, satisfied_no_preset_cars.size());
         try_cars.assign(satisfied_no_preset_cars.begin(), satisfied_no_preset_cars.begin() + len);
         preset = false;
     }
-
+    else{
+        // 没有候选车辆或者场上车数过多 // 直接不上车辆了
+        return 0;
+    }
     // 3. 对待上路列表进行处理
     int count = 0;
     for(int car_id : try_cars){

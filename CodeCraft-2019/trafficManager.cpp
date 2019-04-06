@@ -340,7 +340,9 @@ bool trafficManager::inference() {
     // 初始化列表
     vector<int> carAtHomeList(0), carOnRoadList(0);
     update_cars(carAtHomeList, carOnRoadList);
-
+    size_t lenOnRoad = carOnRoadList.size();    // 路上车辆
+    size_t lenAtHome = carAtHomeList.size();    // 待出发车辆
+    bool cars_overed = false;
     // 进入调度任务，直至完成
     while (!is_task_completed()) {
         // 1. 更新时间片
@@ -355,10 +357,16 @@ bool trafficManager::inference() {
 
         // 2.2 TODO: 每条路上路优先车辆
         // FIXME: 目前只在车道标定后丢车，不在路口调度后丢车，后期添加在路口调度时塞车
+        // 判断控制场上车数
+        if(lenOnRoad > how_many_cars_on_road)
+            cars_overed = true;
+        else
+            cars_overed = false;
+
         int priors_count = 0;   // 当前时间片优先车辆的上路数目
         for (auto &road : roadDict) {
             string road_name = road.first;
-            priors_count += roadDict[road_name].start_priors(carDict, TIME);
+            priors_count += roadDict[road_name].start_priors(carDict, TIME, cars_overed);
         }
 
         // 2.3 由于2.2进行了上路处理，因此需要更新在路的车辆
@@ -404,17 +412,24 @@ bool trafficManager::inference() {
         cout << ("TIME: " + to_string(TIME) + ", LOOPs " + to_string(cross_loop_alert)) << endl;
 
         // 4. 更新车辆列表
+        int carsOnEnd = update_cars(carAtHomeList, carOnRoadList);  // 计算路口调度后回家的车辆
+        lenOnRoad = carOnRoadList.size();    // 路上车辆
+        lenAtHome = carAtHomeList.size();    // 待出发车辆
+
+        if(lenOnRoad > how_many_cars_on_road)
+            cars_overed = true;
+        else
+            cars_overed = false;
 
         int count_start = priors_count;    // 上路车数
-        // 先不控制上路数量
         for (auto &road : roadDict) {
             string road_name = road.first;
-            count_start += roadDict[road_name].start_un_priors(carDict, TIME);  // 每条路上路
+            count_start += roadDict[road_name].start_un_priors(carDict, TIME, cars_overed);  // 每条路上路
         }
 
-        int carsOnEnd = update_cars(carAtHomeList, carOnRoadList);  // 计算路口调度后回家的车辆
-        size_t lenOnRoad = carOnRoadList.size();    // 路上车辆
-        size_t lenAtHome = carAtHomeList.size();    // 待出发车辆
+        update_cars(carAtHomeList, carOnRoadList);
+        lenOnRoad = carOnRoadList.size();    // 路上车辆
+        lenAtHome = carAtHomeList.size();    // 待出发车辆
         cout << "priors on: " + to_string(priors_count) + ", "
             + "total on: " + to_string(count_start)  + ", "
             + "len on road: " + to_string(lenOnRoad) + ", "
