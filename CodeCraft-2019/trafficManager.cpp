@@ -13,35 +13,41 @@
 
 /**
  * 调度中心，构造函数
- * @param topo
+ * @param topology
  * @param cross_dict
  * @param car_dict
  * @param road_dict
  */
-trafficManager::trafficManager(topology_type &topo, unordered_map<int, Cross> &cross_dict,
+trafficManager::trafficManager(topology_type &topology_, unordered_map<int, Cross> &cross_dict,
                                unordered_map<int, Car> &car_dict, unordered_map<string, Road> &road_dict,
-                               size_t on_road_cars) {
-    topology = topo;
+                               int on_road_cars) {
+    topology = topology_;
     crossDict = cross_dict;
     carDict = car_dict;
     roadDict = road_dict;
-    how_many_cars_on_road = on_road_cars;
+    how_many_cars_on_road = (size_t) on_road_cars;
 
     TIME = 0;
     TIME_STEP = 1;
     result = unordered_map<int, schedule_result>();
     launch_order = vector<int>();
+    launch_order_preset_priors = vector<int>();   // 预置优先车辆
+    launch_order_preset_notpriors = vector<int>();   // 预置非优先车辆
+    launch_order_notpreset_priors = vector<int>();   // 非预置优先车辆
+    launch_order_notpreset_notpriors = vector<int>();   // 非预置非优先车辆
 
-
+    // 路口升序排布列表
     crossList = vector<int>(0);
     for (auto &cross : crossDict) {
         int cross_id = cross.first;
         crossList.push_back(cross_id);
     }
-    sort(crossList.begin(), crossList.end());   // 升序排布
-    get_start_list(launch_order);
-    graph = Graph(crossList);
+    sort(crossList.begin(), crossList.end());
 
+    // 根据总体分布生成序列
+    get_start_list(launch_order);
+
+    graph = Graph(crossList);
 }
 
 /**
@@ -332,14 +338,10 @@ unordered_map<int, schedule_result> trafficManager::get_result() {
 bool trafficManager::inference() {
     TIME = 0;   // 初始化时间
     graph = get_new_map();  // 初始化有向图
+    update_road_prior_cars();                        // 初始化每条道路的优先车辆集合
     // 初始化列表
     vector<int> carAtHomeList(0), carOnRoadList(0);
     update_cars(carAtHomeList, carOnRoadList);
-    vector<int> carNotPriorAtHomeList(0);   // 非优先待上路车辆
-    unordered_map<int, vector<pair<int, int>>> carPriorAtHome;    // 优先待上路车辆
-    update_prior_cars(carAtHomeList, carNotPriorAtHomeList, carPriorAtHome);
-    size_t lenOnRoad = carOnRoadList.size();    // 路上车辆
-    size_t lenAtHome = carNotPriorAtHomeList.size();    // 待出发车辆
 
     // 进入调度任务，直至完成
     while (!is_task_completed()) {
@@ -353,6 +355,8 @@ bool trafficManager::inference() {
             roadDict[road_name].update_road(carDict);
         }
 
+        // 2.2 TODO: 每条路尽可能上路优先车辆
+
         // 3. 更新所有路口
         // 重置路口标记
         for (int cross_id : crossList) {
@@ -362,20 +366,13 @@ bool trafficManager::inference() {
 
         // 路口调度计数，用于判断堵死
         int cross_loop_alert = 0;
-        int cars_on_road_in_cross = 0;  // 在路口调度中上路的优先车辆数目
         // 这个While 是刚需，必须要完成道路所有车辆的调度才能进行下一个时间片
-        size_t how_many_in_cross = (how_many_cars_on_road - lenOnRoad) / crossList.size() + 1; // 分配的辆数
         while (any_car_waiting(carOnRoadList)) {
             for (int cross_id : crossList) {
                 Cross &cross = crossDict[cross_id]; // 路口
-                // TODO: 该路口的待调度的优先车辆(后期注意控制车辆数目)
-                vector<pair<int, int>> &priority_cars = carPriorAtHome[cross_id];
-                size_t cars_num = priority_cars.size();
-                int cross_cars = how_many_in_cross;
                 if (!cross.if_cross_ended()) {
-                    cross.update_cross(roadDict, carDict, CROSS_LOOP_TIMES, TIME, priority_cars, graph, cross_cars);    // 更新一次路口
+                    cross.update_cross(roadDict, carDict, CROSS_LOOP_TIMES, TIME, graph);    // 更新一次路口
                 }
-                cars_on_road_in_cross += cars_num - priority_cars.size();   // 累加
             }
 
             cross_loop_alert += 1;
@@ -399,48 +396,45 @@ bool trafficManager::inference() {
         }
         cout << ("TIME: " + to_string(TIME) + ", LOOPs " + to_string(cross_loop_alert)) << endl;
 
-        // 4. 更新车辆列表
-        carAtHomeList.clear();
-        carOnRoadList.clear();
-        int carsOnEnd = update_cars(carAtHomeList, carOnRoadList);
-        carNotPriorAtHomeList.clear();   // 非优先待上路车辆
-        carPriorAtHome.clear();    // 优先待上路车辆
-        update_prior_cars(carAtHomeList, carNotPriorAtHomeList, carPriorAtHome);
-        lenOnRoad = carOnRoadList.size();    // 路上车辆
-        lenAtHome = carNotPriorAtHomeList.size();    // 待出发车辆
-        int count_start = 0;    // 上路车数
-        if (lenOnRoad < how_many_cars_on_road) {
-            // 上路数目
-            size_t how_many = 0;
-            how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
-            // TODO: 只负责非优先（优先车辆应该已经在路口调度中压榨到了极致）
-            vector<int> car_ordered(carNotPriorAtHomeList.begin(), carNotPriorAtHomeList.begin() + how_many);
-            sort(car_ordered.begin(), car_ordered.end());  // 小号优先
-
-            for (unsigned int i = 0; i < how_many; ++i) {
-                int car_id = car_ordered[i];
-                Car &car_obj = carDict[car_id];
-
-                // 判断道路挤不挤，挤就不上路
-                if (crossDict[car_obj.carFrom].call_times > 10) {
-                    continue;
-                }
-                string road_name = car_obj.try_start(graph, TIME);
-                if (road_name != NO_ANSWER) {
-                    Road &road_obj = roadDict[road_name];
-                    if (road_obj.try_on_road(car_obj))   // 尝试上路
-                    {
-                        count_start += 1;
-                        carOnRoadList.push_back(car_obj.carID);
-                        lenOnRoad += 1;
-                        lenAtHome -= 1;
-                    }
-                }
-            }
-        }
-        cout << to_string(cars_on_road_in_cross) + "," + to_string(count_start) + "," + to_string(lenAtHome) + "," +
-                to_string(lenOnRoad) + "," +
-                to_string(carsOnEnd) << endl;
+//        // 4. 更新车辆列表
+//        carAtHomeList.clear();
+//        carOnRoadList.clear();
+//        int carsOnEnd = update_cars(carAtHomeList, carOnRoadList);
+//        lenOnRoad = carOnRoadList.size();    // 路上车辆
+//        lenAtHome = carNotPriorAtHomeList.size();    // 待出发车辆
+//        int count_start = 0;    // 上路车数
+//        if (lenOnRoad < how_many_cars_on_road) {
+//            // 上路数目
+//            size_t how_many = 0;
+//            how_many = min(how_many_cars_on_road - lenOnRoad, lenAtHome);
+//            // TODO: 只负责非优先（优先车辆应该已经在路口调度中压榨到了极致）
+//            vector<int> car_ordered(carNotPriorAtHomeList.begin(), carNotPriorAtHomeList.begin() + how_many);
+//            sort(car_ordered.begin(), car_ordered.end());  // 小号优先
+//
+//            for (unsigned int i = 0; i < how_many; ++i) {
+//                int car_id = car_ordered[i];
+//                Car &car_obj = carDict[car_id];
+//
+//                // 判断道路挤不挤，挤就不上路
+//                if (crossDict[car_obj.carFrom].call_times > 10) {
+//                    continue;
+//                }
+//                string road_name = car_obj.try_start(graph, TIME);
+//                if (road_name != NO_ANSWER) {
+//                    Road &road_obj = roadDict[road_name];
+//                    if (road_obj.try_on_road(car_obj))   // 尝试上路
+//                    {
+//                        count_start += 1;
+//                        carOnRoadList.push_back(car_obj.carID);
+//                        lenOnRoad += 1;
+//                        lenAtHome -= 1;
+//                    }
+//                }
+//            }
+//        }
+//        cout << to_string(count_start) + "," + to_string(lenAtHome) + "," +
+//                to_string(lenOnRoad) + "," +
+//                to_string(carsOnEnd) << endl;
     }
 
     cout << "Tasks Completed! " << endl;
@@ -576,6 +570,19 @@ double trafficManager::calc_factor_a(int &first_car_plan_time) {
             (ends.size() * 1.0 / ends_prior.size()) * 0.2375;
     first_car_plan_time = first_prior_plan_time;
     return a;
+}
+
+/**
+ * 初始化每条道路的优先车辆
+ */
+void trafficManager::update_road_prior_cars() {
+    for (auto &car : carDict) {
+        int car_id = car.first;
+        if (!carDict[car_id].carPriority)    // 只负责优先车辆
+            continue;
+
+
+    }
 }
 
 

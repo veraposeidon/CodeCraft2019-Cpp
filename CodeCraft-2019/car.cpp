@@ -83,11 +83,11 @@ void Car::mark_new_pos(int road_id, int channel, int pos, int this_cross, int ne
 /// \param suceed
 /// \return
 string Car::try_start(Graph &graph, int time) {
-    // 如果已经在路上就不需要再启动了
+    // 已经在路上就不需要再启动了
     if (carStatus != WAITING_HOME) {
         return NO_ANSWER;
     }
-    // 或者没到时间
+    // 没到时间
     if (time < carPlanTime) {
         return NO_ANSWER;
     }
@@ -101,6 +101,7 @@ string Car::try_start(Graph &graph, int time) {
     int next_cross = strategy[1];
     // 2. 下段路名称
     string name = to_string(now_cross) + "_" + to_string(next_cross);
+
     // 3. 时间
     startTime = time;
     return name;
@@ -244,13 +245,50 @@ void Car::update_new_strategy(Graph &graph) {
  * 为预置车辆设定路线
  * @param routes
  */
-void Car::set_preset_route(int time, vector<int> routes) {
+void Car::set_preset_route(int time, vector<int> routes, topology_type &topologyDict) {
     // 断言判断本车是属于预置车辆
     assert(carPreset);
     // 设定实际出发时间（预计出发时间）
     carPlanTime = time;
-    // 设定路线 //passedBy就不改了，还是按照运行来。
-    strategy = std::move(routes);
+    // 设定节点,根据路线一个一个添加节点
+    int this_cross = carFrom;
+    strategy.push_back(this_cross);
+    for (int road_id : routes) {
+        for (auto &item : topologyDict[this_cross]) {
+            if (item.road_id == road_id) {
+                strategy.push_back(item.end);
+                this_cross = item.end;
+            }
+        }
+    }
+    assert(this_cross == carTo);    // 遍历到最后应该是终点
+
+    // 设定路线 // passedBy就不改了，还是按照运行来。
+    // passed_by = std::move(routes);
+}
+
+/**
+ * 计算优先车辆的上路名称
+ * @param graph
+ * @return
+ */
+string Car::on_road_name(Graph &graph) {
+    // 断言判断优先车辆
+    assert(carPriority);
+
+    // 对于非预置车辆
+
+    // 1. 起点，终点和路径
+    int start = carFrom;
+    int end = carTo;
+    // 最佳路径
+    strategy = graph.short_path_finding(start, end);
+    int now_cross = strategy[0];
+    int next_cross = strategy[1];
+
+    // 2. 下段路名称
+    string name = to_string(now_cross) + "_" + to_string(next_cross);
+    return std::__cxx11::string();
 }
 
 

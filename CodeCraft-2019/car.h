@@ -119,7 +119,10 @@ public:
     void update_new_strategy(Graph &graph);
 
     // 复赛：预置车辆设定固定路线
-    void set_preset_route(int time, vector<int> routes);
+    void set_preset_route(int time, vector<int> routes, topology_type &topologyDict);
+
+    // 计算优先车辆上路的道路名称
+    string on_road_name(Graph &graph);
 
 };
 

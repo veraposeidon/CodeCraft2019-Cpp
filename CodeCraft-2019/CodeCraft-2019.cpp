@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     for(auto &preset_car: preset_car_dict)
     {
         int car_id = preset_car.first;
-        cars[car_id].set_preset_route(preset_car.second.real_start_time, preset_car.second.routes);
+        cars[car_id].set_preset_route(preset_car.second.real_start_time, preset_car.second.routes, topologyDict);
     }
 
 
@@ -156,9 +156,9 @@ int main(int argc, char *argv[]) {
             }
             string s = ss.str();
 
-            string singletxt = "(" + to_string(car_id) + ", " + to_string(time) + ", " + s + ")" + "\n";
+            string single_txt = "(" + to_string(car_id) + ", " + to_string(time) + ", " + s + ")" + "\n";
 
-            answerFile << singletxt;
+            answerFile << single_txt;
         }
     }
     answerFile.close();

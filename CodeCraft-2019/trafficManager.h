@@ -75,12 +75,17 @@ public:
     size_t how_many_cars_on_road;
 
     unordered_map<int, schedule_result> result; // 调度结果
-    vector<int> launch_order;   // 车辆启动顺序
+    vector<int> launch_order;   // 车辆待启动序列
+    vector<int> launch_order_preset_priors;   // 预置优先车辆
+    vector<int> launch_order_preset_notpriors;   // 预置非优先车辆
+    vector<int> launch_order_notpreset_priors;   // 非预置优先车辆
+    vector<int> launch_order_notpreset_notpriors;   // 非预置非优先车辆
+
     vector<int> crossList;  // 路口遍历顺序
 
     // 构造函数
-    trafficManager(topology_type &topo, unordered_map<int, Cross> &cross_dict, unordered_map<int, Car> &car_dict,
-                   unordered_map<string, Road> &road_dict, size_t on_road_cars);
+    trafficManager(topology_type &topology_, unordered_map<int, Cross> &cross_dict, unordered_map<int, Car> &car_dict,
+                   unordered_map<string, Road> &road_dict, int on_road_cars);
 
     // 初始化上路顺序
     void get_start_list(vector<int> &order);
@@ -93,7 +98,7 @@ public:
 
     // 遍历车辆，更新优先车辆和非优先车辆列表
     void update_prior_cars(vector<int> &carAtHomeList, vector<int> &carNotPriorAtHomeList,
-                           unordered_map<int, vector<pair<int, int>> > &carPriorAtHome);
+                           unordered_map<int, vector<pair<int, int>>> &carPriorAtHome);
 
     // 是否所有车辆演算结束
     bool is_task_completed();
@@ -115,6 +120,10 @@ public:
 
     // 计算系数因子
     double calc_factor_a(int &first_car_plan_time);
+
+    // 初始化每条道路的优先车辆
+    void update_road_prior_cars();
+
 };
 
 

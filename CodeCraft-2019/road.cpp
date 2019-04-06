@@ -22,6 +22,8 @@ Road::Road() {
     first_order_car_id = -1;
     // 所有道路格子赋为 -1
     roadStatus = vector<vector<int> >(0, vector<int>(0, -1));
+    // 上路的优先车辆
+    prior_cars = vector<int>();
 }
 
 
@@ -46,6 +48,8 @@ Road::Road(const int road_id, const int length, const int speed_limit, const int
     first_order_car_id = -1;
     // 所有道路格子赋为 -1
     roadStatus = vector<vector<int> > (roadChannel, vector<int>(roadLength, -1));
+    // 道路负责上路的优先车辆集合
+    prior_cars = vector<int>();
 }
 
 /*
