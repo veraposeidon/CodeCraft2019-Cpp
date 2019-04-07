@@ -3,6 +3,7 @@
 //
 
 #include <algorithm>
+#include <iostream>
 #include <cassert>
 #include "dijsktra.h"
 #include "car.h"

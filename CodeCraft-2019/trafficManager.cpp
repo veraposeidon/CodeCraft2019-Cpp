@@ -358,15 +358,18 @@ bool trafficManager::inference() {
         // 2.2 TODO: 每条路上路优先车辆
         // FIXME: 目前只在车道标定后丢车，不在路口调度后丢车，后期添加在路口调度时塞车
         // 判断控制场上车数
-        if(lenOnRoad > how_many_cars_on_road)
-            cars_overed = true;
-        else
-            cars_overed = false;
+        cars_overed = lenOnRoad > how_many_cars_on_road;
 
         int priors_count = 0;   // 当前时间片优先车辆的上路数目
         for (auto &road : roadDict) {
             string road_name = road.first;
-            priors_count += roadDict[road_name].start_priors(carDict, TIME, cars_overed);
+            // 路口如果挤就不上路了
+            bool local_overed = false;
+            if (crossDict[roadDict[road_name].roadOrigin].call_times >= BANED_CAR_ON ||
+                crossDict[roadDict[road_name].roadDest].call_times >= BANED_CAR_ON)
+                local_overed = true;
+
+            priors_count += roadDict[road_name].start_priors(carDict, TIME, cars_overed || local_overed);
         }
 
         // 2.3 由于2.2进行了上路处理，因此需要更新在路的车辆
@@ -397,18 +400,20 @@ bool trafficManager::inference() {
                 // assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
                 return false;
             }
+        }
 
-            if (cross_loop_alert >= LOOPS_TO_UPDATE) {
-                // FIXME: 暂时无缘，先跑出复赛地图再说  TODO: 怂恿堵着的车辆换路线 // TODO: 高速路开高速车 // TODO: 定时更新策略
-                graph = get_new_map();  // 更新 有向图 权重
-                // 更新 路上车辆 路线
-                for (size_t i = 0; i < carOnRoadList.size(); i += UPDATE_FREQUENCE) {
-                    int car_id = carOnRoadList[i];
-                    Car &car_o = carDict[car_id];
-                    car_o.update_new_strategy(graph);
-                }
+        // 更换路线 放在while外面会加速，减少无意义的更新路线
+        if (cross_loop_alert >= LOOPS_TO_UPDATE) {
+            // FIXME: 暂时无缘，先跑出复赛地图再说  TODO: 怂恿堵着的车辆换路线 // TODO: 高速路开高速车 // TODO: 定时更新策略
+            graph = get_new_map();  // 更新 有向图 权重
+            // 更新 路上车辆 路线
+            for (size_t i = 0; i < carOnRoadList.size(); i += UPDATE_FREQUENCE) {
+                int car_id = carOnRoadList[i];
+                Car &car_o = carDict[car_id];
+                car_o.update_new_strategy(graph);
             }
         }
+
         cout << ("TIME: " + to_string(TIME) + ", LOOPs " + to_string(cross_loop_alert)) << endl;
 
         // 4. 更新车辆列表
@@ -416,34 +421,40 @@ bool trafficManager::inference() {
         lenOnRoad = carOnRoadList.size();    // 路上车辆
         lenAtHome = carAtHomeList.size();    // 待出发车辆
 
-        if(lenOnRoad > how_many_cars_on_road)
-            cars_overed = true;
-        else
-            cars_overed = false;
+        cars_overed = lenOnRoad > how_many_cars_on_road;
 
         int count_start = priors_count;    // 上路车数
         for (auto &road : roadDict) {
             string road_name = road.first;
-            count_start += roadDict[road_name].start_un_priors(carDict, TIME, cars_overed);  // 每条路上路
+            // 路口如果挤就不上路了
+            bool local_overed = false;
+            if (crossDict[roadDict[road_name].roadOrigin].call_times >= BANED_CAR_ON ||
+                crossDict[roadDict[road_name].roadDest].call_times >= BANED_CAR_ON)
+                local_overed = true;
+
+            count_start += roadDict[road_name].start_un_priors(carDict, TIME, cars_overed || local_overed);  // 每条路上路
         }
 
         update_cars(carAtHomeList, carOnRoadList);
         lenOnRoad = carOnRoadList.size();    // 路上车辆
         lenAtHome = carAtHomeList.size();    // 待出发车辆
-        cout << "priors on: " + to_string(priors_count) + ", "
-            + "total on: " + to_string(count_start)  + ", "
-            + "len on road: " + to_string(lenOnRoad) + ", "
-            + "len at home: " + to_string(lenAtHome) + ", "
-            + "arrived: " + to_string(carsOnEnd) << endl;
+        cout << "priors: " + to_string(priors_count) + ", "
+                + "totalStart: " + to_string(count_start) + ", "
+                + "ON_ROAD: " + to_string(lenOnRoad) + ", "
+                + "WAITING_HOME: " + to_string(lenAtHome) + ", "
+                + "ARRIVED: " + to_string(carsOnEnd) << endl;
     }
 
-    cout << "Tasks Completed! " << endl;
-    cout << "system schedule time is: " + to_string(TIME) << endl;
+    // 5. 计算调度时间
+    int system_toal_schedule_time = TIME;
+
+    cout << "Task Completed! " << endl;
+    cout << "system schedule time is: " + to_string(system_toal_schedule_time) << endl;
     cout << "all cars total schedule time: " + to_string(total_schedule_time()) << endl;
-    int car_prior_plan_time;
-    int factor_a = int(calc_factor_a(car_prior_plan_time));
-    int prior_schedule_time = TIME - car_prior_plan_time;
-    int T = factor_a * prior_schedule_time + TIME;
+    int prior_time; // 优先车辆调度时间
+    double factor_a = calc_factor_a(prior_time);   // 保留五位
+    cout << factor_a << endl;
+    auto T = (int) (factor_a * prior_time + TIME);   // 取整
     cout << "new schedule time: " + to_string(T) << endl;
     return true;
 }
@@ -509,21 +520,23 @@ void trafficManager::update_prior_cars(vector<int> &carAtHomeList, vector<int> &
  * @return
  */
 double trafficManager::calc_factor_a(int &first_car_plan_time) {
-    int cars_total = 0;
-    int cars_prior_total = 0;
-    int maxspeed = 0;
-    int minspeed = 0x3f3f3f3f;
-    int maxspeed_prior = 0;
-    int minspeed_prior = 0x3f3f3f3f;
-    int timelast = 0;
-    int timefirst = 0x3f3f3f3f;
-    int timelast_prior = 0;
-    int timefirst_prior = 0x3f3f3f3f;
-    set<int> starts;
-    set<int> starts_prior;
-    set<int> ends;
-    set<int> ends_prior;
-    int first_prior_plan_time = 0x3f3f3f3f; // 最早计划出发时间最早的优先车辆计划出发时间
+    int cars_total = 0;         // 车辆总数
+    int cars_prior_total = 0;   // 优先车辆数
+    int maxspeed = 0;           // 所有车辆最高速
+    int minspeed = 0x3f3f3f3f;  // 所有车辆最低速
+    int maxspeed_prior = 0;     // 优先车辆最高车速
+    int minspeed_prior = 0x3f3f3f3f;    // 优先车辆最低车速
+    int timelast = 0;           // 所以车辆最晚出发时间
+    int timefirst = 0x3f3f3f3f; // 所有车辆最早出发时间
+    int timelast_prior = 0;     // 优先车辆最晚出发时间
+    int timefirst_prior = 0x3f3f3f3f;   // 优先车辆最早出发时间
+    set<int> starts;            // 所有车辆出发地分布
+    set<int> starts_prior;      // 优先车辆出发地分布
+    set<int> ends;              // 所有车辆终止点分布
+    set<int> ends_prior;        // 优先车辆终止点分布
+    int first_prior_car_time = 0x3f3f3f3f; // 最早计划出发时间最早的优先车辆计划出发时间
+    int first_prior_car_id = 0;
+    int last_prior_car_time = 0;
 
     for (auto &item :carDict) {
         int car_id = item.first;
@@ -558,17 +571,24 @@ double trafficManager::calc_factor_a(int &first_car_plan_time) {
             starts_prior.insert(car.carFrom);
             ends_prior.insert(car.carTo);
 
-            if (car.carPlanTime < first_prior_plan_time)
-                first_prior_plan_time = car.carPlanTime;
+            if (car.startTime < first_prior_car_time) {
+                first_prior_car_time = car.startTime;
+                first_prior_car_id = car_id;
+            }
+
+            if (car.arriveTime > last_prior_car_time)
+                last_prior_car_time = car.arriveTime;
         }
     }
+
+    assert(size_t (cars_total) == carDict.size());
 
     double a = cars_total * 1.0 / cars_prior_total * 0.05 +
                (maxspeed * 1.0 / minspeed) / (maxspeed_prior * 1.0 / minspeed_prior) * 0.2375 +
                (timelast * 1.0 / timefirst) / (timelast_prior * 1.0 / timefirst_prior) * 0.2375 +
                (starts.size() * 1.0 / starts_prior.size()) * 0.2375 +
                (ends.size() * 1.0 / ends_prior.size()) * 0.2375;
-    first_car_plan_time = first_prior_plan_time;
+    first_car_plan_time = last_prior_car_time - carDict[first_prior_car_id].carPlanTime;
     return a;
 }
 
