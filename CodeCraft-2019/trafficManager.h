@@ -8,7 +8,7 @@
 // 场上车辆数目
 //#define CARS_ON_ROAD  {9000,8500, 8000, 5000, 3000, 2000}    // 大参数跑成绩，小参数保命
 //#define CARS_ON_ROAD  {5500,5000,4000,3500,3000}    // 大参数跑成绩，小参数保命
-#define CARS_ON_ROAD  {5200, 4000}    // 大参数跑成绩，小参数保命
+#define CARS_ON_ROAD  {5200}    // 大参数跑成绩5200，小参数保命
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
@@ -32,14 +32,15 @@
 #define DIST_PERCENT (0.5)
 
 // 路口权重调用比例 基数 越小影响越大
-#define CROSS_BASE (20)
+#define CROSS_BASE (15)
 
 // 路口调度次数多的话说明该路口拥堵，就不在以该路口为起点或终点的道路上发车了
-#define BANED_CAR_ON (3)
+#define BANED_CAR_ON (4)
 
 // 动态调度 抽样频率
 // 通过降低抽样频率来加快运行速度
 #define UPDATE_FREQUENCE (2)
+
 
 // 上路方式
 //#define START_RANDOM    // 随机上路

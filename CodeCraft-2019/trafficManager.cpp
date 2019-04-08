@@ -596,7 +596,7 @@ double trafficManager::calc_factor_a(int &first_car_plan_time) {
  * 初始化每条道路的优先车辆
  */
 void trafficManager::initialize_road_prior_cars_and_normal_cars() {
-    // 初始化车辆数目
+    // 初始化车辆数目, 分成四类
     for (auto &car : carDict) {
         int car_id = car.first;
         string road_name = carDict[car_id].on_road_name(graph);
@@ -626,9 +626,7 @@ void trafficManager::initialize_road_prior_cars_and_normal_cars() {
         string road_name = road_item.first;
         Road &road = roadDict[road_name];
 
-        // 对优先预置车辆上路顺序进行调整
-        // 预置车辆由于固定了时间，所以上路的顺序有两个决定，第一是出发时间，第二才是车辆ID
-        // 对预置车辆上路顺序进行调整
+        // 对优先预置车辆上路顺序进行调整。时间-》ID
         sort(road.prior_cars_preset.begin(), road.prior_cars_preset.end(), [=](int &a, int &b) {
             if(carDict.at(a).carPlanTime < carDict.at(b).carPlanTime)
                 return true;
@@ -638,10 +636,12 @@ void trafficManager::initialize_road_prior_cars_and_normal_cars() {
                 return a < b;   // 按ID排序
             }});
         count += road.prior_cars_preset.size();
-        // 对优先非预置车辆上路顺序进行调整
-        // FIXME : 非预置的优先车辆由于并没有固定出发时间，因此什么时候出发完全是生成的，因此上路的顺序只需要符合ID小优先即可，也应当符合能上就上原则，不然很难处理好第一遍调度和路口调度完之后的上路问题
-        sort(road.prior_cars_unpreset.begin(), road.prior_cars_unpreset.end(), [=](int &a, int &b){return a<b;});   // 对ID进行排序
+
+        // 对优先非预置车辆上路顺序进行调整。 预计时间
+        sort(road.prior_cars_unpreset.begin(), road.prior_cars_unpreset.end(),
+             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
         count += road.prior_cars_unpreset.size();
+
         // 非优先预置
         sort(road.unpriors_cars_preset.begin(), road.unpriors_cars_preset.end(), [=](int &a, int &b) {
             if(carDict.at(a).carPlanTime < carDict.at(b).carPlanTime)
@@ -652,8 +652,11 @@ void trafficManager::initialize_road_prior_cars_and_normal_cars() {
                 return a < b;   // 按ID排序
             }});
         count += road.unpriors_cars_preset.size();
-        // 非优先非预置
-        sort(road.unpriors_cars_unpreset.begin(), road.unpriors_cars_unpreset.end(), [=](int &a, int &b){return a<b;});
+
+        // 非优先非预置排序： 时间
+//        sort(road.unpriors_cars_unpreset.begin(), road.unpriors_cars_unpreset.end(), [=](int &a, int &b){return a<b;});   // ID排序
+        sort(road.unpriors_cars_unpreset.begin(), road.unpriors_cars_unpreset.end(),
+             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
         count += road.unpriors_cars_unpreset.size();
     }
     assert(count == carDict.size());

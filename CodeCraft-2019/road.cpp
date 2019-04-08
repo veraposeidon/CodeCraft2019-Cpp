@@ -261,6 +261,10 @@ bool Road::get_checkin_place_start(int &e_channel, int &e_pos) {
  * @return True,成功； False,失败
  */
 bool Road::try_on_road(Car &car_obj, int time) {
+    // 判断时间
+    if (car_obj.carPlanTime > time)
+        return false;
+
     // 1. 找车位
     int e_channel=-1, e_pos=-1;
     bool succeed = get_checkin_place_start(e_channel, e_pos);
@@ -488,21 +492,12 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
 
     // 1. 满足条件的预置车辆和非预置车辆
     vector<int> satisfied_preset_cars(0);
-    vector<int> satisfied_no_preset_cars(0);
 
     for(int car_id : prior_cars_preset){
         if(car_dict[car_id].carPlanTime <= time)
             satisfied_preset_cars.push_back(car_id);
         else
             break;  // 因为是按出发时间排序的,不满足就表示时间超了
-    }
-
-    // TODO: 限制数目
-    for(int car_id : prior_cars_unpreset){
-        if(car_dict[car_id].carPlanTime <= time)
-            satisfied_no_preset_cars.push_back(car_id);
-        else
-            break;  // 无所谓出发时间,后期限制数目
     }
 
     // 2. 决定上路的车辆和排序
@@ -514,11 +509,12 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
         preset = true;
     }
     // 如果没有预置车辆，那就处理非预置车辆
-    else if(!satisfied_no_preset_cars.empty() && !cars_overed){
-        size_t maxnum = 1;
-        size_t len = min(maxnum, satisfied_no_preset_cars.size());
-        try_cars.assign(satisfied_no_preset_cars.begin(), satisfied_no_preset_cars.begin() + len);
-//        try_cars = satisfied_no_preset_cars;
+    else if (!prior_cars_unpreset.empty() && !cars_overed) {
+        size_t maxnum = CARS_ON_SINGLE_ROAD;
+        size_t len = min(maxnum, prior_cars_unpreset.size());
+        try_cars.assign(prior_cars_unpreset.begin(), prior_cars_unpreset.begin() + len);
+        // 对上路车辆进行ID排序
+        sort(try_cars.begin(), try_cars.end());
         preset = false;
     }else{
         // 没有候选车辆或者场上车数过多 // 直接不上车辆了
@@ -560,21 +556,12 @@ int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time , bool car
 
     // 1. 满足条件的预置车辆和非预置车辆
     vector<int> satisfied_preset_cars(0);
-    vector<int> satisfied_no_preset_cars(0);
 
     for(int car_id : unpriors_cars_preset){
         if(car_dict[car_id].carPlanTime <= time)
             satisfied_preset_cars.push_back(car_id);
         else
             break;  // 因为是按出发时间排序的,不满足就表示时间超了
-    }
-
-    // TODO: 限制数目
-    for(int car_id : unpriors_cars_unpreset){
-        if(car_dict[car_id].carPlanTime <= time)
-            satisfied_no_preset_cars.push_back(car_id);
-        else
-            break;  // 无所谓出发时间,后期限制数目
     }
 
     // 2. 决定上路的车辆和排序
@@ -586,11 +573,13 @@ int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time , bool car
         preset = true;
     }
         // 如果没有预置车辆，那就处理非预置车辆
-    else if(!satisfied_no_preset_cars.empty() && !cars_overed){
+    else if (!unpriors_cars_unpreset.empty() && !cars_overed) {
         // FIXME: 先处理每条路处理2辆
-        size_t maxnum = 1;
-        size_t len = min(maxnum, satisfied_no_preset_cars.size());
-        try_cars.assign(satisfied_no_preset_cars.begin(), satisfied_no_preset_cars.begin() + len);
+        size_t maxnum = CARS_ON_SINGLE_ROAD;
+        size_t len = min(maxnum, unpriors_cars_unpreset.size());
+        try_cars.assign(unpriors_cars_unpreset.begin(), unpriors_cars_unpreset.begin() + len);
+        // 对上路车辆进行ID排序
+        sort(try_cars.begin(), try_cars.end());
         preset = false;
     }
     else{
