@@ -358,7 +358,10 @@ bool trafficManager::inference() {
         // 2.2 TODO: 每条路上路优先车辆
         // FIXME: 目前只在车道标定后丢车，不在路口调度后丢车，后期添加在路口调度时塞车
         // 判断控制场上车数
-        cars_overed = lenOnRoad > how_many_cars_on_road;
+        if (lenOnRoad > how_many_cars_on_road)
+            cars_overed = true;
+        else
+            cars_overed = false;
 
         int priors_count = 0;   // 当前时间片优先车辆的上路数目
         for (auto &road : roadDict) {
@@ -421,7 +424,10 @@ bool trafficManager::inference() {
         lenOnRoad = carOnRoadList.size();    // 路上车辆
         lenAtHome = carAtHomeList.size();    // 待出发车辆
 
-        cars_overed = lenOnRoad > how_many_cars_on_road;
+        if (lenOnRoad > how_many_cars_on_road)
+            cars_overed = true;
+        else
+            cars_overed = false;
 
         int count_start = priors_count;    // 上路车数
         for (auto &road : roadDict) {
@@ -446,16 +452,19 @@ bool trafficManager::inference() {
     }
 
     // 5. 计算调度时间
-    int system_toal_schedule_time = TIME;
-
     cout << "Task Completed! " << endl;
-    cout << "system schedule time is: " + to_string(system_toal_schedule_time) << endl;
-    cout << "all cars total schedule time: " + to_string(total_schedule_time()) << endl;
+    cout << "End Time: " + to_string(TIME) << endl;
+
+
     int prior_time; // 优先车辆调度时间
-    double factor_a = calc_factor_a(prior_time);   // 保留五位
-    cout << factor_a << endl;
-    auto T = (int) (factor_a * prior_time + TIME);   // 取整
-    cout << "new schedule time: " + to_string(T) << endl;
+    long long total_all, total_pri;  // 车辆和优先车辆总调度时间
+    total_schedule_time(total_all, total_pri, prior_time);
+    double factor_a, factor_b;  // 两个系数
+    calc_factor_a(factor_a, factor_b);
+    int T_e = (int) (factor_a * prior_time + TIME);
+    long long T_esum = (int) (factor_b * total_pri + total_all);
+    cout << "schedule time: " + to_string(T_e) << endl;
+    cout << "schedule time total: " + to_string(T_esum) << endl;
     return true;
 }
 
@@ -463,14 +472,26 @@ bool trafficManager::inference() {
  * 所有车辆调度时间
  * @return
  */
-long long trafficManager::total_schedule_time() {
-    long long total = 0;
+void trafficManager::total_schedule_time(long long &total_all, long long &total_pri, int &first_car_plan_time) {
+    total_all = 0;
+    total_pri = 0;
+    int first_prior_car_time = 0x3f3f3f3f; // 最早计划出发时间最早的优先车辆计划出发时间
+    int last_prior_car_time = 0;
     for (auto &car : carDict) {
         int car_id = car.first;
         int time = carDict[car_id].arriveTime - carDict[car_id].carPlanTime;
-        total += time;
+        total_all += time;
+        if (carDict[car_id].carPriority) {
+            total_pri += time;
+            if (carDict[car_id].startTime < first_prior_car_time) {
+                first_prior_car_time = carDict[car_id].carPlanTime;
+            }
+
+            if (carDict[car_id].arriveTime > last_prior_car_time)
+                last_prior_car_time = carDict[car_id].arriveTime;
+        }
     }
-    return total;
+    first_car_plan_time = last_prior_car_time - first_prior_car_time;
 }
 
 
@@ -488,38 +509,12 @@ void trafficManager::find_dead_clock() {
     cout << "Dead Clock: " << max_cross_id << endl;
 }
 
-/**
- * 更新待上路的优先车辆和非优先车辆
- * @param carAtHomeList
- * @param carNotPriorAtHomeList
- * @param carPriorAtHome
- */
-void trafficManager::update_prior_cars(vector<int> &carAtHomeList, vector<int> &carNotPriorAtHomeList,
-                                       unordered_map<int, vector<pair<int, int>>> &carPriorAtHome) {
-    for (int &car_id:carAtHomeList) {
-        if (!carDict[car_id].carPriority) {   // 非优先车辆
-            carNotPriorAtHomeList.push_back(car_id);
-        } else { // 优先车辆，按出发地点保存id和出发时间，
-            int cross_id = carDict[car_id].carFrom;
-            int time = carDict[car_id].carPlanTime;
-            carPriorAtHome[cross_id].push_back(make_pair(car_id, time)); // 塞入优先车辆ID
-        }
-    }
-    // 每个路口的优先车辆按照出发时间升序排列
-    for (auto &cross:carPriorAtHome) {
-        int cross_id = cross.first;
-//        sort(carPriorAtHome[cross_id].begin(), carPriorAtHome[cross_id].end()); // 按ID排序
-//        sort(carPriorAtHome[cross_id].begin(), carPriorAtHome[cross_id].end(),[=](pair<int,int>&a, pair<int,int>&b){return a.second < b.second;});    // 按时间排序
-        sort(carPriorAtHome[cross_id].begin(), carPriorAtHome[cross_id].end(),
-             [=](pair<int, int> &a, pair<int, int> &b) { return a.first < b.first; });    // 按ID排序
-    }
-}
 
 /**
  * 计算系数因子a
  * @return
  */
-double trafficManager::calc_factor_a(int &first_car_plan_time) {
+void trafficManager::calc_factor_a(double &a, double &b) {
     int cars_total = 0;         // 车辆总数
     int cars_prior_total = 0;   // 优先车辆数
     int maxspeed = 0;           // 所有车辆最高速
@@ -534,69 +529,55 @@ double trafficManager::calc_factor_a(int &first_car_plan_time) {
     set<int> starts_prior;      // 优先车辆出发地分布
     set<int> ends;              // 所有车辆终止点分布
     set<int> ends_prior;        // 优先车辆终止点分布
-    int first_prior_car_time = 0x3f3f3f3f; // 最早计划出发时间最早的优先车辆计划出发时间
-    int first_prior_car_id = 0;
-    int last_prior_car_time = 0;
-
     for (auto &item :carDict) {
         int car_id = item.first;
         Car &car = carDict[car_id];
-
         cars_total += 1;
-
         if (car.carSpeed > maxspeed)
             maxspeed = car.carSpeed;
         if (car.carSpeed < minspeed)
             minspeed = car.carSpeed;
-        if (car.startTime > timelast)
-            timelast = car.startTime;
-        if (car.startTime < timefirst)
-            timefirst = car.startTime;
+        if (car.carPlanTime > timelast)
+            timelast = car.carPlanTime;
+        if (car.carPlanTime < timefirst)
+            timefirst = car.carPlanTime;
         starts.insert(car.carFrom);
         ends.insert(car.carTo);
 
         // 针对优先级车辆
         if (car.carPriority) {
-
             cars_prior_total += 1;
-
             if (car.carSpeed > maxspeed_prior)
                 maxspeed_prior = car.carSpeed;
             if (car.carSpeed < minspeed_prior)
                 minspeed_prior = car.carSpeed;
-            if (car.startTime > timelast_prior)
-                timelast_prior = car.startTime;
-            if (car.startTime < timefirst_prior)
-                timefirst_prior = car.startTime;
+            if (car.carPlanTime > timelast_prior)
+                timelast_prior = car.carPlanTime;
+            if (car.carPlanTime < timefirst_prior)
+                timefirst_prior = car.carPlanTime;
             starts_prior.insert(car.carFrom);
             ends_prior.insert(car.carTo);
-
-            if (car.startTime < first_prior_car_time) {
-                first_prior_car_time = car.startTime;
-                first_prior_car_id = car_id;
-            }
-
-            if (car.arriveTime > last_prior_car_time)
-                last_prior_car_time = car.arriveTime;
         }
     }
 
     assert(size_t (cars_total) == carDict.size());
-
-    double a = cars_total * 1.0 / cars_prior_total * 0.05 +
+    a = cars_total * 1.0 / cars_prior_total * 0.05 +
                (maxspeed * 1.0 / minspeed) / (maxspeed_prior * 1.0 / minspeed_prior) * 0.2375 +
                (timelast * 1.0 / timefirst) / (timelast_prior * 1.0 / timefirst_prior) * 0.2375 +
                (starts.size() * 1.0 / starts_prior.size()) * 0.2375 +
                (ends.size() * 1.0 / ends_prior.size()) * 0.2375;
-    first_car_plan_time = last_prior_car_time - carDict[first_prior_car_id].carPlanTime;
-    return a;
+    b = cars_total * 1.0 / cars_prior_total * 0.8 +
+        (maxspeed * 1.0 / minspeed) / (maxspeed_prior * 1.0 / minspeed_prior) * 0.05 +
+        (timelast * 1.0 / timefirst) / (timelast_prior * 1.0 / timefirst_prior) * 0.05 +
+        (starts.size() * 1.0 / starts_prior.size()) * 0.05 +
+        (ends.size() * 1.0 / ends_prior.size()) * 0.05;
 }
 
 /**
  * 初始化每条道路的优先车辆
  */
 void trafficManager::initialize_road_prior_cars_and_normal_cars() {
-    // 初始化车辆数目, 分成四类
+    // 初始化车辆数目
     for (auto &car : carDict) {
         int car_id = car.first;
         string road_name = carDict[car_id].on_road_name(graph);
@@ -626,7 +607,9 @@ void trafficManager::initialize_road_prior_cars_and_normal_cars() {
         string road_name = road_item.first;
         Road &road = roadDict[road_name];
 
-        // 对优先预置车辆上路顺序进行调整。时间-》ID
+        // 对优先预置车辆上路顺序进行调整
+        // 预置车辆由于固定了时间，所以上路的顺序有两个决定，第一是出发时间，第二才是车辆ID
+        // 对预置车辆上路顺序进行调整
         sort(road.prior_cars_preset.begin(), road.prior_cars_preset.end(), [=](int &a, int &b) {
             if(carDict.at(a).carPlanTime < carDict.at(b).carPlanTime)
                 return true;
@@ -636,12 +619,11 @@ void trafficManager::initialize_road_prior_cars_and_normal_cars() {
                 return a < b;   // 按ID排序
             }});
         count += road.prior_cars_preset.size();
-
-        // 对优先非预置车辆上路顺序进行调整。 预计时间
+        // 对优先非预置车辆上路顺序进行调整
+        // FIXME : 非预置的优先车辆由于并没有固定出发时间，因此什么时候出发完全是生成的，因此上路的顺序只需要符合ID小优先即可，也应当符合能上就上原则，不然很难处理好第一遍调度和路口调度完之后的上路问题
         sort(road.prior_cars_unpreset.begin(), road.prior_cars_unpreset.end(),
-             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
+             [=](int &a, int &b) { return a < b; });   // 对ID进行排序
         count += road.prior_cars_unpreset.size();
-
         // 非优先预置
         sort(road.unpriors_cars_preset.begin(), road.unpriors_cars_preset.end(), [=](int &a, int &b) {
             if(carDict.at(a).carPlanTime < carDict.at(b).carPlanTime)
@@ -652,11 +634,9 @@ void trafficManager::initialize_road_prior_cars_and_normal_cars() {
                 return a < b;   // 按ID排序
             }});
         count += road.unpriors_cars_preset.size();
-
-        // 非优先非预置排序： 时间
-//        sort(road.unpriors_cars_unpreset.begin(), road.unpriors_cars_unpreset.end(), [=](int &a, int &b){return a<b;});   // ID排序
+        // 非优先非预置
         sort(road.unpriors_cars_unpreset.begin(), road.unpriors_cars_unpreset.end(),
-             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
+             [=](int &a, int &b) { return a < b; });
         count += road.unpriors_cars_unpreset.size();
     }
     assert(count == carDict.size());

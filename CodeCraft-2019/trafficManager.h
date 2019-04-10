@@ -8,7 +8,7 @@
 // 场上车辆数目
 //#define CARS_ON_ROAD  {9000,8500, 8000, 5000, 3000, 2000}    // 大参数跑成绩，小参数保命
 //#define CARS_ON_ROAD  {5500,5000,4000,3500,3000}    // 大参数跑成绩，小参数保命
-#define CARS_ON_ROAD  {5200}    // 大参数跑成绩5200，小参数保命
+#define CARS_ON_ROAD  {5000, 4000}    // 大参数跑成绩，小参数保命
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
@@ -32,7 +32,7 @@
 #define DIST_PERCENT (0.5)
 
 // 路口权重调用比例 基数 越小影响越大
-#define CROSS_BASE (15)
+#define CROSS_BASE (20)
 
 // 路口调度次数多的话说明该路口拥堵，就不在以该路口为起点或终点的道路上发车了
 #define BANED_CAR_ON (4)
@@ -40,7 +40,6 @@
 // 动态调度 抽样频率
 // 通过降低抽样频率来加快运行速度
 #define UPDATE_FREQUENCE (2)
-
 
 // 上路方式
 //#define START_RANDOM    // 随机上路
@@ -97,10 +96,6 @@ public:
     // 遍历车辆，获取状态, 在发车列表上进行遍历
     int update_cars(vector<int> &carAtHomeList, vector<int> &carOnRoadList);
 
-    // 遍历车辆，更新优先车辆和非优先车辆列表
-    void update_prior_cars(vector<int> &carAtHomeList, vector<int> &carNotPriorAtHomeList,
-                           unordered_map<int, vector<pair<int, int>>> &carPriorAtHome);
-
     // 是否所有车辆演算结束
     bool is_task_completed();
 
@@ -114,13 +109,13 @@ public:
     bool inference();
 
     // 总调度时间
-    long long total_schedule_time();
+    void total_schedule_time(long long &total_all, long long &total_pri, int &first_car_plan_time);
 
     // 找到堵死路口
     void find_dead_clock();
 
     // 计算系数因子
-    double calc_factor_a(int &first_car_plan_time);
+    void calc_factor_a(double &a, double &b);
 
     // 初始化每条道路的优先车辆
     void initialize_road_prior_cars_and_normal_cars();
