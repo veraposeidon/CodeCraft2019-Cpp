@@ -261,6 +261,9 @@ bool Road::get_checkin_place_start(int &e_channel, int &e_pos) {
  * @return True,成功； False,失败
  */
 bool Road::try_on_road(Car &car_obj, int time) {
+    // 判断时间
+    if (car_obj.carPlanTime > time)
+        return false;
     // 1. 找车位
     int e_channel=-1, e_pos=-1;
     bool succeed = get_checkin_place_start(e_channel, e_pos);
@@ -479,7 +482,6 @@ bool Road::get_checkin_place_cross(int &e_channel, int &e_pos, unordered_map<int
  * 对优先级的车辆进行上路处理，需要考虑预置车辆
  * // FIXME: 因为解决不了预置车辆和优先车辆的优先级冲突，因此决定要么预置上路要么优先上路
  * // FIXME: 先按能上则上来，后期调整数量
- * // FIXME: 后期改进时间复杂度， 先排好序，不重新调用sort了。
  */
 int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overed) {
     // 判空处理
@@ -497,14 +499,6 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
             break;  // 因为是按出发时间排序的,不满足就表示时间超了
     }
 
-    // TODO: 限制数目
-    for (int car_id : prior_cars_unpreset) {
-        if (car_dict[car_id].carPlanTime <= time)
-            satisfied_no_preset_cars.push_back(car_id);
-        else
-            break;  // 无所谓出发时间,后期限制数目
-    }
-
     // 2. 决定上路的车辆和排序
     vector<int> try_cars;
     bool preset = false;
@@ -513,12 +507,13 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
         try_cars = satisfied_preset_cars;
         preset = true;
     }
-    // 如果没有预置车辆，那就处理非预置车辆
-    else if (!satisfied_no_preset_cars.empty() && !cars_overed) {
-        size_t maxnum = 1;
-        size_t len = min(maxnum, satisfied_no_preset_cars.size());
-        try_cars.assign(satisfied_no_preset_cars.begin(), satisfied_no_preset_cars.begin() + len);
-//        try_cars = satisfied_no_preset_cars;
+        // 如果没有预置车辆，那就处理非预置车辆
+    else if (!prior_cars_unpreset.empty() && !cars_overed) {
+        size_t max_num = CARS_ON_SINGLE_ROAD;
+        size_t len = min(max_num, prior_cars_unpreset.size());
+        try_cars.assign(prior_cars_unpreset.begin(), prior_cars_unpreset.begin() + len);
+        // 对上路车辆进行ID排序
+        sort(try_cars.begin(), try_cars.end());
         preset = false;
     }else{
         // 没有候选车辆或者场上车数过多 // 直接不上车辆了
@@ -529,8 +524,7 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
     int count = 0;
     for(int car_id : try_cars){
         Car &car_obj = car_dict[car_id];
-        // 尝试上路这些车辆，哪些能上哪些不能上
-        // TODO: 注意区分第一次上路和路口内调度上路，判断堵车的方式不一样
+        // FIXME: 注意区分第一次上路和路口内调度上路，判断堵车的方式不一样
         if(try_on_road(car_obj, time)){
             // 上路成功，抹去上路清单位置
             if(preset){
@@ -547,8 +541,6 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
 
 /**
  * 处理非优先车辆
- * // FIXME: 也是分预置和非预置处理
- * 要是场上车数多了，就不上非预置的车了
  * @param car_dict
  * @param time
  * @return
@@ -569,15 +561,6 @@ int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time , bool car
             break;  // 因为是按出发时间排序的,不满足就表示时间超了
     }
 
-    // TODO: 限制数目
-    for (int car_id : unpriors_cars_unpreset) {
-        if (car_dict[car_id].carPlanTime <= time)
-            satisfied_no_preset_cars.push_back(car_id);
-        else
-            break;  // 无所谓出发时间,后期限制数目
-    }
-
-    // 2. 决定上路的车辆和排序
     vector<int> try_cars;
     bool preset = false;
     // 如果存在预置车辆，那就先只处理预置车辆
@@ -586,23 +569,24 @@ int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time , bool car
         preset = true;
     }
         // 如果没有预置车辆，那就处理非预置车辆
-    else if (!satisfied_no_preset_cars.empty() && !cars_overed) {
-        // FIXME: 先处理每条路处理2辆
-        size_t maxnum = 1;
-        size_t len = min(maxnum, satisfied_no_preset_cars.size());
-        try_cars.assign(satisfied_no_preset_cars.begin(), satisfied_no_preset_cars.begin() + len);
+    else if (!unpriors_cars_unpreset.empty() && !cars_overed) {
+        size_t max_num = CARS_ON_SINGLE_ROAD;
+        size_t len = min(max_num, unpriors_cars_unpreset.size());
+        try_cars.assign(unpriors_cars_unpreset.begin(), unpriors_cars_unpreset.begin() + len);
+        // 对上路车辆进行ID排序
+        sort(try_cars.begin(), try_cars.end());
         preset = false;
     }
     else{
-        // 没有候选车辆或者场上车数过多 // 直接不上车辆了
+        // 没有候选车辆或者场上车数过多 直接不上车辆了
         return 0;
     }
+
     // 3. 对待上路列表进行处理
     int count = 0;
     for(int car_id : try_cars){
         Car &car_obj = car_dict[car_id];
-        // 尝试上路这些车辆，哪些能上哪些不能上
-        // TODO: 注意区分第一次上路和路口内调度上路，判断堵车的方式不一样
+        // FIXME: 注意区分第一次上路和路口内调度上路，判断堵车的方式不一样
         if(try_on_road(car_obj, time)){
             // 上路成功，抹去上路清单位置
             if(preset){

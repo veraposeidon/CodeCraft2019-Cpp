@@ -407,11 +407,14 @@ bool trafficManager::inference() {
 
         // 更换路线 放在while外面会加速，减少无意义的更新路线
         if (cross_loop_alert >= LOOPS_TO_UPDATE) {
-            // FIXME: 暂时无缘，先跑出复赛地图再说  TODO: 怂恿堵着的车辆换路线 // TODO: 高速路开高速车 // TODO: 定时更新策略
+            // TODO: 怂恿堵着的车辆换路线 // TODO: 高速路开高速车 // TODO: 定时更新策略
             graph = get_new_map();  // 更新 有向图 权重
             // 更新 路上车辆 路线
             for (size_t i = 0; i < carOnRoadList.size(); i += UPDATE_FREQUENCE) {
-                int car_id = carOnRoadList[i];
+                // 随机更换道路路径
+//                unsigned long long int rand_i = rand() % carOnRoadList.size();    // 随机测试无用
+                unsigned long long int rand_i = i;
+                int car_id = carOnRoadList[rand_i];
                 Car &car_o = carDict[car_id];
                 car_o.update_new_strategy(graph);
             }
@@ -451,11 +454,11 @@ bool trafficManager::inference() {
                 + "ARRIVED: " + to_string(carsOnEnd) << endl;
     }
 
+
+    // ********************统计调度时间*******************
     // 5. 计算调度时间
     cout << "Task Completed! " << endl;
     cout << "End Time: " + to_string(TIME) << endl;
-
-
     int prior_time; // 优先车辆调度时间
     long long total_all, total_pri;  // 车辆和优先车辆总调度时间
     total_schedule_time(total_all, total_pri, prior_time);
@@ -607,36 +610,36 @@ void trafficManager::initialize_road_prior_cars_and_normal_cars() {
         string road_name = road_item.first;
         Road &road = roadDict[road_name];
 
-        // 对优先预置车辆上路顺序进行调整
-        // 预置车辆由于固定了时间，所以上路的顺序有两个决定，第一是出发时间，第二才是车辆ID
-        // 对预置车辆上路顺序进行调整
+        // 优先预置车辆：按出发时间和ID排序
         sort(road.prior_cars_preset.begin(), road.prior_cars_preset.end(), [=](int &a, int &b) {
             if(carDict.at(a).carPlanTime < carDict.at(b).carPlanTime)
                 return true;
             else if(carDict.at(a).carPlanTime > carDict.at(b).carPlanTime)
                 return false;
             else{
-                return a < b;   // 按ID排序
+                return a < b;
             }});
         count += road.prior_cars_preset.size();
-        // 对优先非预置车辆上路顺序进行调整
-        // FIXME : 非预置的优先车辆由于并没有固定出发时间，因此什么时候出发完全是生成的，因此上路的顺序只需要符合ID小优先即可，也应当符合能上就上原则，不然很难处理好第一遍调度和路口调度完之后的上路问题
+
+        // 优先非预置车辆：按预计出发时间排序
         sort(road.prior_cars_unpreset.begin(), road.prior_cars_unpreset.end(),
-             [=](int &a, int &b) { return a < b; });   // 对ID进行排序
+             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
         count += road.prior_cars_unpreset.size();
-        // 非优先预置
+
+        // 非优先预置：按出发时间和ID排序
         sort(road.unpriors_cars_preset.begin(), road.unpriors_cars_preset.end(), [=](int &a, int &b) {
             if(carDict.at(a).carPlanTime < carDict.at(b).carPlanTime)
                 return true;
             else if(carDict.at(a).carPlanTime > carDict.at(b).carPlanTime)
                 return false;
             else{
-                return a < b;   // 按ID排序
+                return a < b;
             }});
         count += road.unpriors_cars_preset.size();
-        // 非优先非预置
+
+        // 非优先非预置：按预计出发时间排序
         sort(road.unpriors_cars_unpreset.begin(), road.unpriors_cars_unpreset.end(),
-             [=](int &a, int &b) { return a < b; });
+             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
         count += road.unpriors_cars_unpreset.size();
     }
     assert(count == carDict.size());
