@@ -260,13 +260,19 @@ bool Road::get_checkin_place_start(int &e_channel, int &e_pos) {
  * @param car_obj
  * @return True,成功； False,失败
  */
-bool Road::try_on_road(Car &car_obj, int time) {
+bool Road::try_on_road(Car &car_obj, int time, bool in_cross, unordered_map<int, Car> &car_dict) {
     // 判断时间
     if (car_obj.carPlanTime > time)
         return false;
     // 1. 找车位
     int e_channel=-1, e_pos=-1;
-    bool succeed = get_checkin_place_start(e_channel, e_pos);
+    bool succeed;
+    if (in_cross) {
+        succeed = get_checkin_place_cross(e_channel, e_pos, car_dict);
+    } else {
+        succeed = get_checkin_place_start(e_channel, e_pos);
+    }
+
 
     if (!succeed)
         return false;   // 上路失败
@@ -482,8 +488,9 @@ bool Road::get_checkin_place_cross(int &e_channel, int &e_pos, unordered_map<int
  * 对优先级的车辆进行上路处理，需要考虑预置车辆
  * // FIXME: 因为解决不了预置车辆和优先车辆的优先级冲突，因此决定要么预置上路要么优先上路
  * // FIXME: 先按能上则上来，后期调整数量
+ * // incross表示是否处于路口调度阶段
  */
-int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overed) {
+int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overload, bool in_cross) {
     // 判空处理
     if(prior_cars_preset.empty() && prior_cars_unpreset.empty())
         return 0;
@@ -508,7 +515,7 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
         preset = true;
     }
         // 如果没有预置车辆，那就处理非预置车辆
-    else if (!prior_cars_unpreset.empty() && !cars_overed) {
+    else if (!prior_cars_unpreset.empty() && !cars_overload) {
         size_t max_num = CARS_ON_SINGLE_ROAD;
         size_t len = min(max_num, prior_cars_unpreset.size());
         try_cars.assign(prior_cars_unpreset.begin(), prior_cars_unpreset.begin() + len);
@@ -525,7 +532,7 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
     for(int car_id : try_cars){
         Car &car_obj = car_dict[car_id];
         // FIXME: 注意区分第一次上路和路口内调度上路，判断堵车的方式不一样
-        if(try_on_road(car_obj, time)){
+        if (try_on_road(car_obj, time, in_cross, car_dict)) {
             // 上路成功，抹去上路清单位置
             if(preset){
                 prior_cars_preset.erase(remove(prior_cars_preset.begin(), prior_cars_preset.end(), car_id), prior_cars_preset.end());
@@ -545,7 +552,7 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
  * @param time
  * @return
  */
-int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time , bool cars_overed) {
+int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overload, bool in_cross) {
     // 判空处理
     if(unpriors_cars_preset.empty() && unpriors_cars_unpreset.empty())
         return 0;
@@ -569,7 +576,7 @@ int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time , bool car
         preset = true;
     }
         // 如果没有预置车辆，那就处理非预置车辆
-    else if (!unpriors_cars_unpreset.empty() && !cars_overed) {
+    else if (!unpriors_cars_unpreset.empty() && !cars_overload) {
         size_t max_num = CARS_ON_SINGLE_ROAD;
         size_t len = min(max_num, unpriors_cars_unpreset.size());
         try_cars.assign(unpriors_cars_unpreset.begin(), unpriors_cars_unpreset.begin() + len);
@@ -587,7 +594,7 @@ int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time , bool car
     for(int car_id : try_cars){
         Car &car_obj = car_dict[car_id];
         // FIXME: 注意区分第一次上路和路口内调度上路，判断堵车的方式不一样
-        if(try_on_road(car_obj, time)){
+        if (try_on_road(car_obj, time, in_cross, car_dict)) {
             // 上路成功，抹去上路清单位置
             if(preset){
                 unpriors_cars_preset.erase(remove(unpriors_cars_preset.begin(), unpriors_cars_preset.end(), car_id), unpriors_cars_preset.end());

@@ -372,7 +372,7 @@ bool trafficManager::inference() {
                 crossDict[roadDict[road_name].roadDest].call_times >= BANED_CAR_ON)
                 local_overed = true;
 
-            priors_count += roadDict[road_name].start_priors(carDict, TIME, cars_overed || local_overed);
+            priors_count += roadDict[road_name].start_priors(carDict, TIME, cars_overed || local_overed, false);
         }
 
         // 2.3 由于2.2进行了上路处理，因此需要更新在路的车辆
@@ -441,7 +441,8 @@ bool trafficManager::inference() {
                 crossDict[roadDict[road_name].roadDest].call_times >= BANED_CAR_ON)
                 local_overed = true;
 
-            count_start += roadDict[road_name].start_un_priors(carDict, TIME, cars_overed || local_overed);  // 每条路上路
+            count_start += roadDict[road_name].start_un_priors(carDict, TIME, cars_overed || local_overed,
+                                                               false);  // 每条路上路
         }
 
         update_cars(carAtHomeList, carOnRoadList);

@@ -11,7 +11,7 @@
 using namespace std;
 
 // 单条道路上路车辆数目
-#define CARS_ON_SINGLE_ROAD (1)
+#define CARS_ON_SINGLE_ROAD (2)
 
 class Road {
 public:
@@ -52,7 +52,7 @@ public:
     bool get_checkin_place_cross(int &e_channel, int &e_pos, unordered_map<int, Car> &car_dict);
 
     // 车辆入驻道路
-    bool try_on_road(Car &car_obj, int time);
+    bool try_on_road(Car &car_obj, int time, bool in_cross, unordered_map<int, Car> &car_dict);
 
     // 当有车更新到终止态之后，要更新一次当前车道的车辆
     void update_channel(int channel_id, unordered_map<int, Car> &car_dict);
@@ -70,10 +70,10 @@ public:
     int get_first_order_car(unordered_map<int, Car> &car_dict);
 
     // 对优先级的车辆进行上路处理
-    int start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overed);
+    int start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overload, bool in_cross);
 
     // 对非优先车辆进行上路处理
-    int start_un_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overed);
+    int start_un_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overload, bool in_cross);
 };
 
 
