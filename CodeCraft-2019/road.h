@@ -11,7 +11,7 @@
 using namespace std;
 
 // 单条道路上路车辆数目
-#define CARS_ON_SINGLE_ROAD (2)
+#define CARS_ON_SINGLE_ROAD (1)
 
 class Road {
 public:

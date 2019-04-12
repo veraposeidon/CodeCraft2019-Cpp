@@ -7,7 +7,7 @@
 
 // 场上车辆数目
 //#define CARS_ON_ROAD  {5500,5000,4000,3500,3000}    // 大参数跑成绩，小参数保命
-#define CARS_ON_ROAD  {5000,4000}    // 大参数跑成绩5000，小参数保命4000
+#define CARS_ON_ROAD  {4000}    // 大参数跑成绩5000，小参数保命4000
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)

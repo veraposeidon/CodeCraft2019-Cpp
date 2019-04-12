@@ -13,6 +13,10 @@
 using namespace std;
 #define NO_FIND ("NO_FIND")
 
+// 单个路口上尝试值越小风险越小
+#define CARS_ON_SINGLE_CROSS (2)    // 调成1就关闭了
+
+
 struct order_info {
     int car_id;
     string road_name;
@@ -89,15 +93,15 @@ public:
     void move_car_across(Car &car_obj, Road &this_road, Road &next_road, unordered_map<int, Car> &car_dict);
 
     // 调度路口
-    void update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross,
-                      int time, Graph &graph);
+    int update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross,
+                     int time, Graph &graph, bool cars_overload);
 
     // 在路口调度时上路
     bool try_on_road_across(Car &car_obj, Road &next_road, unordered_map<int, Car> &car_dict);
 
-    // 调度路口
-    void process_cross(unordered_map<int, order_info> &next_roads, unordered_map<string, Road> &road_dict,
-                       unordered_map<int, Car> &car_dict, int time, Graph &graph);
+    // 调度路口 返回调度路口时的上路车辆
+    int process_cross(unordered_map<int, order_info> &next_roads, unordered_map<string, Road> &road_dict,
+                      unordered_map<int, Car> &car_dict, int time, Graph &graph, bool cars_overload);
 
     // 有无优先车辆到目标道路
     bool has_prior_car_conflict(unordered_map<int, order_info> &roads_map, int target_road_id);

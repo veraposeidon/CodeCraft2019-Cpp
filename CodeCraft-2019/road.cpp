@@ -487,7 +487,6 @@ bool Road::get_checkin_place_cross(int &e_channel, int &e_pos, unordered_map<int
 /**
  * 对优先级的车辆进行上路处理，需要考虑预置车辆
  * // FIXME: 因为解决不了预置车辆和优先车辆的优先级冲突，因此决定要么预置上路要么优先上路
- * // FIXME: 先按能上则上来，后期调整数量
  * // incross表示是否处于路口调度阶段
  */
 int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_overload, bool in_cross) {
@@ -516,7 +515,7 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
     }
         // 如果没有预置车辆，那就处理非预置车辆
     else if (!prior_cars_unpreset.empty() && !cars_overload) {
-        size_t max_num = CARS_ON_SINGLE_ROAD;
+        size_t max_num = CARS_ON_SINGLE_ROAD;   // 当前上路最多车辆
         size_t len = min(max_num, prior_cars_unpreset.size());
         try_cars.assign(prior_cars_unpreset.begin(), prior_cars_unpreset.begin() + len);
         // 对上路车辆进行ID排序

@@ -406,9 +406,11 @@ bool Cross::try_on_road_across(Car &car_obj, Road &next_road, unordered_map<int,
  * @param car_dict
  * @param loops_every_cross
  */
-void
+int
 Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, Car> &car_dict, int loops_every_cross,
-                    int time, Graph &graph) {
+                    int time, Graph &graph, bool cars_overload) {
+
+    int cars_on_road = 0;   // 调度路口时的长路车辆（可正可负）
     for (int i = 0; i < loops_every_cross; i++) {
 
         // 获取待调度道路和车辆信息
@@ -416,14 +418,16 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
         // 如果没有待调度车辆，则判断该路口完成
         if (next_roads.empty()) {
             nothing2do = true;
-            return;
+            return 0;
         }
         // 更新路口调用次数
         call_times += 1;
 
         // 调度路口
-        process_cross(next_roads, road_dict, car_dict, time, graph);
+        cars_on_road += process_cross(next_roads, road_dict, car_dict, time, graph, cars_overload);
     }
+
+    return cars_on_road;
 }
 
 /**
@@ -434,8 +438,10 @@ Cross::update_cross(unordered_map<string, Road> &road_dict, unordered_map<int, C
  * @param time
  * @param graph
  */
-void Cross::process_cross(unordered_map<int, order_info> &next_roads, unordered_map<string, Road> &road_dict,
-                          unordered_map<int, Car> &car_dict, int time, Graph &graph) {
+int Cross::process_cross(unordered_map<int, order_info> &next_roads, unordered_map<string, Road> &road_dict,
+                         unordered_map<int, Car> &car_dict, int time, Graph &graph, bool cars_overload) {
+    int on_cars = 0;    // 统计上路车辆-到达终点车辆
+
     // 路口调度信息
     vector<int> roadIDs(0);
     for (auto &road : next_roads) {
@@ -511,11 +517,22 @@ void Cross::process_cross(unordered_map<int, order_info> &next_roads, unordered_
                 this_road.update_channel(car_o.carGPS.channel, car_dict);
                 // 除去道路第一优先序车辆记录
                 this_road.first_order_car_id = -1;
+                // 统计车辆
+                on_cars--;
+                // 当前道路上路优先车辆
+                if (call_times < CARS_ON_SINGLE_CROSS) {
+                    on_cars += this_road.start_priors(car_dict, time, cars_overload, true);
+                }
             } else {
                 Car &car_o = car_dict[next_roads[roadID].car_id];
                 Road &this_road = road_dict[next_roads[roadID].road_name];
                 Road &next_road = road_dict[next_roads[roadID].next_road_name];
                 move_car_across(car_o, this_road, next_road, car_dict);
+//                // 当前道路上路优先车辆
+//                if(call_times < CARS_ON_SINGLE_CROSS){
+//                    on_cars += this_road.start_priors(car_dict, time, cars_overload, true);
+//                    on_cars += next_road.start_priors(car_dict, time, cars_overload, true);
+//                }
             }
 
             // 只更新该道路的优先序车辆
@@ -540,6 +557,8 @@ void Cross::process_cross(unordered_map<int, order_info> &next_roads, unordered_
             }
         }
     }
+
+    return on_cars;
 }
 
 /**

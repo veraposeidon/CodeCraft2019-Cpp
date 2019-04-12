@@ -355,7 +355,6 @@ bool trafficManager::inference() {
         }
 
         // 2.2 每条路上路优先车辆
-        // FIXME: 目前只在车道标定后丢车，不在路口调度后丢车，后期添加在路口调度时塞车
         int priors_count = 0;   // 当前时间片优先车辆的上路数目
         for (auto &road : roadDict) {
             string road_name = road.first;
@@ -374,6 +373,8 @@ bool trafficManager::inference() {
 
         // 2.3 由于2.2进行了上路处理，因此需要更新在路的车辆
         update_cars(carAtHomeList, carOnRoadList);
+        lenOnRoad = carOnRoadList.size();    // 路上车辆
+        lenAtHome = carAtHomeList.size();    // 待出发车辆
 
         // 3. 更新所有路口
         // 重置路口标记
@@ -388,15 +389,18 @@ bool trafficManager::inference() {
         while (any_car_waiting(carOnRoadList)) {
             for (int cross_id : crossList) {
                 Cross &cross = crossDict[cross_id]; // 路口
+
+//                cars_overload = lenOnRoad > how_many_cars_on_road;  // 判断是否满足场上上限
                 if (!cross.if_cross_ended()) {
-                    cross.update_cross(roadDict, carDict, CROSS_LOOP_TIMES, TIME, graph);    // 更新一次路口
+                    lenOnRoad += cross.update_cross(roadDict, carDict, CROSS_LOOP_TIMES, TIME, graph,
+                                                    cars_overload);    // 更新一次路口
                 }
             }
 
             cross_loop_alert += 1;
             if (cross_loop_alert > LOOPS_TO_DEAD_CLOCK) {
                 cout << "**************Dead Clock****************" << endl;
-                find_dead_clock();  // 找到堵死的路口//其实没有意义
+                find_dead_clock(); // 找到堵死的路口 // 其实没有意义
                 // assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
                 return false;
             }
@@ -463,9 +467,9 @@ bool trafficManager::inference() {
     double factor_a, factor_b;  // 两个系数
     calc_factor_a(factor_a, factor_b);
     auto T_e = (int) (factor_a * prior_time + TIME);
-    long long T_esum = (int) (factor_b * total_pri + total_all);
+    long long T_sum = (int) (factor_b * total_pri + total_all);
     cout << "schedule time: " + to_string(T_e) << endl;
-    cout << "schedule time total: " + to_string(T_esum) << endl;
+    cout << "schedule time total: " + to_string(T_sum) << endl;
     return true;
 }
 
@@ -619,9 +623,11 @@ void trafficManager::initialize_road_prior_cars_and_normal_cars() {
             }});
         count += road.prior_cars_preset.size();
 
-        // 优先非预置车辆：按预计出发时间排序
+//        // 优先非预置车辆：按ID排序，这样就无需考虑先后问题了
+//        sort(road.prior_cars_unpreset.begin(), road.prior_cars_unpreset.end(),
+//             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
         sort(road.prior_cars_unpreset.begin(), road.prior_cars_unpreset.end(),
-             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
+             [=](int &a, int &b) { return a < b; });   // 对ID进行排序
         count += road.prior_cars_unpreset.size();
 
         // 非优先预置：按出发时间和ID排序
@@ -637,7 +643,11 @@ void trafficManager::initialize_road_prior_cars_and_normal_cars() {
 
         // 非优先非预置：按预计出发时间排序
         sort(road.unpriors_cars_unpreset.begin(), road.unpriors_cars_unpreset.end(),
-             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
+             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对时间
+//        sort(road.unpriors_cars_unpreset.begin(), road.unpriors_cars_unpreset.end(),
+//             [=](int &a, int &b) { return carDict.at(a).carSpeed < carDict.at(b).carSpeed; });   // 对时间
+//        sort(road.unpriors_cars_unpreset.begin(), road.unpriors_cars_unpreset.end(),
+//             [=](int &a, int &b) { return a < b; });   // 对ID进行排序
         count += road.unpriors_cars_unpreset.size();
     }
     assert(count == carDict.size());
