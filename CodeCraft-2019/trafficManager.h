@@ -7,13 +7,13 @@
 
 // 场上车辆数目
 //#define CARS_ON_ROAD  {5500,5000,4000,3500,3000}    // 大参数跑成绩，小参数保命
-#define CARS_ON_ROAD  {5000,4000}    // 大参数跑成绩，小参数保命
+#define CARS_ON_ROAD  {5000,4000}    // 大参数跑成绩5000，小参数保命4000
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
 
 // 路口全部调度多少次重新更新车辆路线
-#define LOOPS_TO_UPDATE (3)
+#define LOOPS_TO_UPDATE_STRATEGY (3)
 
 // 路口调度多少次直接判为死锁
 #define LOOPS_TO_DEAD_CLOCK (50)
@@ -32,7 +32,7 @@
 #define DIST_PERCENT (0)
 
 // 路口权重调用比例 基数 越小影响越大
-#define CROSS_BASE (10)
+#define CROSS_BASE (7)
 
 // 路口调度次数多的话说明该路口拥堵，就不在以该路口为起点或终点的道路上发车了
 #define BANED_CAR_ON (4)

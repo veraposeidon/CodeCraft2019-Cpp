@@ -325,7 +325,6 @@ unordered_map<int, schedule_result> trafficManager::get_result() {
         schedule_result singleResult(car_obj.startTime, car_obj.passed_by);
         result[car_id] = singleResult;
     }
-
     return result;
 }
 
@@ -342,7 +341,7 @@ bool trafficManager::inference() {
     update_cars(carAtHomeList, carOnRoadList);
     size_t lenOnRoad = carOnRoadList.size();    // 路上车辆
     size_t lenAtHome = carAtHomeList.size();    // 待出发车辆
-    bool cars_overed = false;
+    bool cars_overload = false;                   // 场上车数达到上限
     // 进入调度任务，直至完成
     while (!is_task_completed()) {
         // 1. 更新时间片
@@ -355,24 +354,22 @@ bool trafficManager::inference() {
             roadDict[road_name].update_road(carDict);
         }
 
-        // 2.2 TODO: 每条路上路优先车辆
+        // 2.2 每条路上路优先车辆
         // FIXME: 目前只在车道标定后丢车，不在路口调度后丢车，后期添加在路口调度时塞车
-        // 判断控制场上车数
-        if (lenOnRoad > how_many_cars_on_road)
-            cars_overed = true;
-        else
-            cars_overed = false;
-
         int priors_count = 0;   // 当前时间片优先车辆的上路数目
         for (auto &road : roadDict) {
             string road_name = road.first;
-            // 路口如果挤就不上路了
-            bool local_overed = false;
+            // 根据路口调度次数（起始路口和终止路口）来判断该道路拥挤程度
+            bool local_overload = false;
             if (crossDict[roadDict[road_name].roadOrigin].call_times >= BANED_CAR_ON ||
                 crossDict[roadDict[road_name].roadDest].call_times >= BANED_CAR_ON)
-                local_overed = true;
+                local_overload = true;
 
-            priors_count += roadDict[road_name].start_priors(carDict, TIME, cars_overed || local_overed, false);
+            cars_overload = lenOnRoad > how_many_cars_on_road;  // 判断是否满足场上上限
+            int road_on;    // 当前道路上路车辆
+            road_on = roadDict[road_name].start_priors(carDict, TIME, cars_overload || local_overload, false);
+            priors_count += road_on;    // 当前时间片优先上路车辆
+            lenOnRoad += priors_count;  // 场上数目
         }
 
         // 2.3 由于2.2进行了上路处理，因此需要更新在路的车辆
@@ -399,16 +396,17 @@ bool trafficManager::inference() {
             cross_loop_alert += 1;
             if (cross_loop_alert > LOOPS_TO_DEAD_CLOCK) {
                 cout << "**************Dead Clock****************" << endl;
-                find_dead_clock();  // 找到堵死的路口
+                find_dead_clock();  // 找到堵死的路口//其实没有意义
                 // assert(false);  // 不直接断言了，保险起见，返回信息重新换参数推演
                 return false;
             }
         }
 
         // 更换路线 放在while外面会加速，减少无意义的更新路线
-        if (cross_loop_alert >= LOOPS_TO_UPDATE) {
-            // TODO: 怂恿堵着的车辆换路线 // TODO: 高速路开高速车 // TODO: 定时更新策略
+        if (cross_loop_alert >= LOOPS_TO_UPDATE_STRATEGY) {
+            // TODO: 高速路开高速车 // TODO: 定时更新策略
             graph = get_new_map();  // 更新 有向图 权重
+
             // 更新 路上车辆 路线
             for (size_t i = 0; i < carOnRoadList.size(); i += UPDATE_FREQUENCE) {
                 // 随机更换道路路径
@@ -427,22 +425,21 @@ bool trafficManager::inference() {
         lenOnRoad = carOnRoadList.size();    // 路上车辆
         lenAtHome = carAtHomeList.size();    // 待出发车辆
 
-        if (lenOnRoad > how_many_cars_on_road)
-            cars_overed = true;
-        else
-            cars_overed = false;
-
         int count_start = priors_count;    // 上路车数
         for (auto &road : roadDict) {
             string road_name = road.first;
             // 路口如果挤就不上路了
-            bool local_overed = false;
+            bool local_overload = false;
             if (crossDict[roadDict[road_name].roadOrigin].call_times >= BANED_CAR_ON ||
                 crossDict[roadDict[road_name].roadDest].call_times >= BANED_CAR_ON)
-                local_overed = true;
+                local_overload = true;
 
-            count_start += roadDict[road_name].start_un_priors(carDict, TIME, cars_overed || local_overed,
+            cars_overload = lenOnRoad > how_many_cars_on_road;  // 判断是否满足场上上限
+            int road_on;    // 当前道路上路车辆
+            road_on = roadDict[road_name].start_un_priors(carDict, TIME, cars_overload || local_overload,
                                                                false);  // 每条路上路
+            count_start += road_on;    // 当前时间片所有上路车辆
+            lenOnRoad += priors_count;  // 场上数目
         }
 
         update_cars(carAtHomeList, carOnRoadList);
@@ -465,7 +462,7 @@ bool trafficManager::inference() {
     total_schedule_time(total_all, total_pri, prior_time);
     double factor_a, factor_b;  // 两个系数
     calc_factor_a(factor_a, factor_b);
-    int T_e = (int) (factor_a * prior_time + TIME);
+    auto T_e = (int) (factor_a * prior_time + TIME);
     long long T_esum = (int) (factor_b * total_pri + total_all);
     cout << "schedule time: " + to_string(T_e) << endl;
     cout << "schedule time total: " + to_string(T_esum) << endl;
