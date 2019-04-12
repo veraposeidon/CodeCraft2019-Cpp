@@ -582,10 +582,21 @@ void trafficManager::calc_factor_a(double &a, double &b) {
  * 初始化每条道路的优先车辆
  */
 void trafficManager::initialize_road_prior_cars_and_normal_cars() {
-    // 初始化车辆数目
+    Graph graph_find = graph;    // 初始化一个地图用于覆盖全部线路,并没有软用
+    // 初始化车辆数目和车辆路线
     for (auto &car : carDict) {
         int car_id = car.first;
         string road_name = carDict[car_id].on_road_name(graph);
+//        vector<int> strategy = carDict[car_id].strategy;    // 找路径
+//        for (int i = 0; i < strategy.size()-1; ++i) {
+//            int this_node = strategy[i];
+//            int next_node = strategy[i+1];
+//            double origin_weight = graph_find.weights[make_tuple(this_node, next_node)];
+//            // 添加覆盖权重
+//            graph_find.update_weight(this_node, next_node, origin_weight + 0.0006);
+//        }
+
+        // 找到
         if (carDict[car_id].carPriority) {
             if(carDict[car_id].carPreset){
                 // 优先车辆 (预置)
@@ -624,10 +635,10 @@ void trafficManager::initialize_road_prior_cars_and_normal_cars() {
         count += road.prior_cars_preset.size();
 
 //        // 优先非预置车辆：按ID排序，这样就无需考虑先后问题了
-//        sort(road.prior_cars_unpreset.begin(), road.prior_cars_unpreset.end(),
-//             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
         sort(road.prior_cars_unpreset.begin(), road.prior_cars_unpreset.end(),
-             [=](int &a, int &b) { return a < b; });   // 对ID进行排序
+             [=](int &a, int &b) { return carDict.at(a).carPlanTime < carDict.at(b).carPlanTime; });   // 对ID进行排序
+//        sort(road.prior_cars_unpreset.begin(), road.prior_cars_unpreset.end(),
+//             [=](int &a, int &b) { return a < b; });   // 对ID进行排序
         count += road.prior_cars_unpreset.size();
 
         // 非优先预置：按出发时间和ID排序

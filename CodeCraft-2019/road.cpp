@@ -495,49 +495,44 @@ int Road::start_priors(unordered_map<int, Car> &car_dict, int time, bool cars_ov
         return 0;
 
     // 1. 满足条件的预置车辆和非预置车辆
-    vector<int> satisfied_preset_cars(0);
-    vector<int> satisfied_no_preset_cars(0);
+    vector<int> satisfied_preset_cars_first(0); // 由于出发时间小于当前时间，强行第一顺序
+    vector<int> satisfied_preset_cars(0);   // 符合当前时间出发，可以跟其他车辆混合出发,并按ID排序
 
+    // 预置车辆的
     for(int car_id : prior_cars_preset){
-        if(car_dict[car_id].carPlanTime <= time)
+        if (car_dict[car_id].carPlanTime < time)
+            satisfied_preset_cars_first.push_back(car_id);
+        else if (car_dict[car_id].carPlanTime == time)
             satisfied_preset_cars.push_back(car_id);
         else
             break;  // 因为是按出发时间排序的,不满足就表示时间超了
     }
+    // 非预置车辆的
+    int nums_propasal = min(CARS_ON_SINGLE_ROAD, (int) prior_cars_unpreset.size());    // 推荐数量
+    // 必须在不拥堵的情况下加非预置车辆
+    for (int i = 0; i < nums_propasal && !cars_overload; i++) {
+        satisfied_preset_cars.push_back(prior_cars_unpreset[i]);
+    }
+    // 进行ID排序
+    sort(satisfied_preset_cars.begin(), satisfied_preset_cars.end());
+
+
 
     // 2. 决定上路的车辆和排序
     vector<int> try_cars;
-    bool preset = false;
-    // 如果存在预置车辆，那就先只处理预置车辆
-    if(!satisfied_preset_cars.empty()){
-        try_cars = satisfied_preset_cars;
-        preset = true;
-    }
-        // 如果没有预置车辆，那就处理非预置车辆
-    else if (!prior_cars_unpreset.empty() && !cars_overload) {
-        size_t max_num = CARS_ON_SINGLE_ROAD;   // 当前上路最多车辆
-        size_t len = min(max_num, prior_cars_unpreset.size());
-        try_cars.assign(prior_cars_unpreset.begin(), prior_cars_unpreset.begin() + len);
-        // 对上路车辆进行ID排序
-        sort(try_cars.begin(), try_cars.end());
-        preset = false;
-    }else{
-        // 没有候选车辆或者场上车数过多 // 直接不上车辆了
-        return 0;
-    }
+    try_cars = satisfied_preset_cars_first;
+    try_cars.insert(try_cars.end(), satisfied_preset_cars.begin(), satisfied_preset_cars.end());
 
     // 3. 对待上路列表进行处理
     int count = 0;
     for(int car_id : try_cars){
         Car &car_obj = car_dict[car_id];
-        // FIXME: 注意区分第一次上路和路口内调度上路，判断堵车的方式不一样
         if (try_on_road(car_obj, time, in_cross, car_dict)) {
             // 上路成功，抹去上路清单位置
-            if(preset){
-                prior_cars_preset.erase(remove(prior_cars_preset.begin(), prior_cars_preset.end(), car_id), prior_cars_preset.end());
-            }else{
-                prior_cars_unpreset.erase(remove(prior_cars_unpreset.begin(), prior_cars_unpreset.end(), car_id), prior_cars_unpreset.end());
-            }
+            prior_cars_preset.erase(remove(prior_cars_preset.begin(), prior_cars_preset.end(), car_id),
+                                    prior_cars_preset.end());
+            prior_cars_unpreset.erase(remove(prior_cars_unpreset.begin(), prior_cars_unpreset.end(), car_id),
+                                      prior_cars_unpreset.end());
             count++;
         }
     }
@@ -557,36 +552,33 @@ int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time, bool cars
         return 0;
 
     // 1. 满足条件的预置车辆和非预置车辆
-    vector<int> satisfied_preset_cars(0);
-    vector<int> satisfied_no_preset_cars(0);
+    vector<int> satisfied_preset_cars_first(0); // 由于出发时间小于当前时间，强行第一顺序
+    vector<int> satisfied_preset_cars(0);   // 符合当前时间出发，可以跟其他车辆混合出发,并按ID排序
 
+    // 预置车辆的
     for(int car_id : unpriors_cars_preset){
-        if(car_dict[car_id].carPlanTime <= time)
+        if (car_dict[car_id].carPlanTime < time)
+            satisfied_preset_cars_first.push_back(car_id);
+        else if (car_dict[car_id].carPlanTime == time)
             satisfied_preset_cars.push_back(car_id);
         else
             break;  // 因为是按出发时间排序的,不满足就表示时间超了
     }
+    // 非预置车辆的
+    int nums_propasal = min(CARS_ON_SINGLE_ROAD, (int) unpriors_cars_unpreset.size());    // 推荐数量
+    // 必须在不拥堵的情况下加非预置车辆
+    for (int i = 0; i < nums_propasal && !cars_overload; i++) {
+        satisfied_preset_cars.push_back(unpriors_cars_unpreset[i]);
+    }
+    // 进行ID排序
+    sort(satisfied_preset_cars.begin(), satisfied_preset_cars.end());
 
+
+
+    // 2. 决定上路的车辆和排序
     vector<int> try_cars;
-    bool preset = false;
-    // 如果存在预置车辆，那就先只处理预置车辆
-    if(!satisfied_preset_cars.empty()){
-        try_cars = satisfied_preset_cars;
-        preset = true;
-    }
-        // 如果没有预置车辆，那就处理非预置车辆
-    else if (!unpriors_cars_unpreset.empty() && !cars_overload) {
-        size_t max_num = CARS_ON_SINGLE_ROAD;
-        size_t len = min(max_num, unpriors_cars_unpreset.size());
-        try_cars.assign(unpriors_cars_unpreset.begin(), unpriors_cars_unpreset.begin() + len);
-        // 对上路车辆进行ID排序
-        sort(try_cars.begin(), try_cars.end());
-        preset = false;
-    }
-    else{
-        // 没有候选车辆或者场上车数过多 直接不上车辆了
-        return 0;
-    }
+    try_cars = satisfied_preset_cars_first;
+    try_cars.insert(try_cars.end(), satisfied_preset_cars.begin(), satisfied_preset_cars.end());
 
     // 3. 对待上路列表进行处理
     int count = 0;
@@ -595,11 +587,10 @@ int Road::start_un_priors(unordered_map<int, Car> &car_dict, int time, bool cars
         // FIXME: 注意区分第一次上路和路口内调度上路，判断堵车的方式不一样
         if (try_on_road(car_obj, time, in_cross, car_dict)) {
             // 上路成功，抹去上路清单位置
-            if(preset){
-                unpriors_cars_preset.erase(remove(unpriors_cars_preset.begin(), unpriors_cars_preset.end(), car_id), unpriors_cars_preset.end());
-            }else{
-                unpriors_cars_unpreset.erase(remove(unpriors_cars_unpreset.begin(), unpriors_cars_unpreset.end(), car_id), unpriors_cars_unpreset.end());
-            }
+            unpriors_cars_preset.erase(remove(unpriors_cars_preset.begin(), unpriors_cars_preset.end(), car_id),
+                                       unpriors_cars_preset.end());
+            unpriors_cars_unpreset.erase(remove(unpriors_cars_unpreset.begin(), unpriors_cars_unpreset.end(), car_id),
+                                         unpriors_cars_unpreset.end());
             count++;
         }
     }
