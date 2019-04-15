@@ -110,6 +110,10 @@ int main(int argc, char *argv[]) {
     cross_dict.clear();
 
     // 5. 拷贝预置车辆信息
+    int preset_car_nums;    // 预置车辆数目
+    preset_car_nums = preset_car_dict.size();
+    auto preset_car_change_times_remain = (int) (preset_car_nums * 0.1);  // 剩余修改次数
+
     for(auto &preset_car: preset_car_dict)
     {
         int car_id = preset_car.first;
@@ -127,7 +131,7 @@ int main(int argc, char *argv[]) {
         manager = trafficManager(topologyDict, crosses, cars, roads, cars_on_road);
 
         // 推演并判断结果，不行换下一组参数
-        bool success = manager.inference();
+        bool success = manager.inference(preset_car_change_times_remain);
         if (success) {
             break;  // 完成任务结束
         } else {

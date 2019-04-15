@@ -331,7 +331,8 @@ unordered_map<int, schedule_result> trafficManager::get_result() {
 /**
  * 推演
  */
-bool trafficManager::inference() {
+bool trafficManager::inference(int preset_car_change_times_remain) {
+    int remain_times = preset_car_change_times_remain;  // 剩余次数
     TIME = 0;   // 初始化时间
     graph = get_new_map();  // 初始化有向图
     initialize_road_prior_cars_and_normal_cars();                        // 初始化每条道路的优先车辆集合
@@ -414,7 +415,32 @@ bool trafficManager::inference() {
                 unsigned long long int rand_i = i;
                 int car_id = carOnRoadList[rand_i];
                 Car &car_o = carDict[car_id];
+//                // TODO： 在此处修预置关系直接修改太不行，换一种方案稍显复杂的，如何让需要的车进行更改
+//                if(remain_times > 0 && car_o.carPreset){
+//                    car_o.carPreset = false;
+//                    remain_times --;
+//                }
                 car_o.update_new_strategy(graph);
+            }
+        }
+
+        // 找到最堵的路口
+        if (cross_loop_alert >= 5 && remain_times > 0) {
+            for (auto cross:crossDict) {
+                int cross_id = cross.first;
+                if (crossDict[cross_id].call_times >= 5) {
+                    for (int car_id: carOnRoadList) {
+                        if (carDict[car_id].carPreset) {
+                            // 确认是否包含路径
+                            if (find(carDict[car_id].strategy.begin(), carDict[car_id].strategy.end(), cross_id) !=
+                                carDict[car_id].strategy.end()) {
+                                carDict[car_id].carPreset = false;
+                                remain_times--;
+
+                            }
+                        }
+                    }
+                }
             }
         }
 

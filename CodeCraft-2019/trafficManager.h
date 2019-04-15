@@ -7,7 +7,7 @@
 
 // 场上车辆数目
 //#define CARS_ON_ROAD  {5500,5000,4000,3500,3000}    // 大参数跑成绩，小参数保命
-#define CARS_ON_ROAD  {5000,4000}    // 大参数跑成绩5000，小参数保命4000
+#define CARS_ON_ROAD  {6200, 3800}    // 大参数跑成绩6200，小参数保命3500
 
 // 一次上路车辆 基数     动态上路
 #define CAR_GET_START_BASE (300)
@@ -106,7 +106,7 @@ public:
     unordered_map<int, schedule_result> get_result();
 
     // 推演
-    bool inference();
+    bool inference(int preset_car_change_times_remain);
 
     // 总调度时间
     void total_schedule_time(long long &total_all, long long &total_pri, int &first_car_plan_time);
